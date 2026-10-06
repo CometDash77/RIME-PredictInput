@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>模型预测设置</title>
+  <style nonce="__NONCE__">
+    :root { color-scheme: light dark; font: 15px/1.55 "Segoe UI", "Microsoft JhengHei UI", sans-serif; --accent: #3478c8; --line: color-mix(in srgb, CanvasText 18%, Canvas); --muted: color-mix(in srgb, CanvasText 68%, Canvas); }
+    body { max-width: 880px; margin: 0 auto; padding: 28px 20px 72px; background: Canvas; color: CanvasText; }
+    header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:22px; }
+    h1 { font-size: 25px; margin:0 0 4px; } h2 { font-size:18px; margin:0 0 14px; } p { margin:4px 0; color:var(--muted); }
+    .card { border-top:1px solid var(--line); padding:18px 0; margin:14px 0; }
+    .row { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:12px 0; } .row > label { min-width:155px; } .row > input, .row > select { max-width:100%; min-width:0; box-sizing:border-box; } #model { flex:1; } #modelSelect { width:100%; } .status { overflow-wrap:anywhere; }
+    label { font-weight:600; } input, select, button { font:inherit; border:1px solid var(--line); border-radius:7px; padding:8px 10px; color:CanvasText; background:Canvas; }
+    input[type=checkbox] { width:18px;height:18px; accent-color:var(--accent); } input[type=number] { width:120px; } input[type=text], input[type=password] { min-width:220px; }
+    button { cursor:pointer; } button.primary { border-color:var(--accent); background:var(--accent); color:white; } button.danger { color:#c93b3b; }
+    button:disabled { opacity:.55; cursor:wait; } .status { min-height:1.5em; color:var(--muted); } .ok { color:#298451; } .bad { color:#c43c3c; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; } .metric { border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow-wrap:anywhere; }
+    .metric strong { display:block; font-size:12px; color:var(--muted); font-weight:500; } .metric span { display:block; margin-top:3px; }
+    .note { font-size:13px; } .hidden { display:none !important; } .top-actions { display:flex;gap:8px;flex-wrap:wrap; }
+    @media (max-width:600px) { body {padding:18px 12px 52px;} header {display:block;} .row > label {min-width:100%;} input[type=text],input[type=password] {min-width:0; flex:1;} }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>模型预测设置</h1><p>只作用于当前 Windows 用户的 RIME 模型预测。</p></div>
+    <div class="top-actions"><button id="refresh">重新读取</button><button id="end" class="danger">结束设置会话</button></div>
+  </header>
+  <div id="notice" class="status" role="status" aria-live="polite"></div>
+
+  <section class="card">
+    <h2>总览</h2>
+    <div class="row"><label for="enabled">启用模型预测</label><input id="enabled" type="checkbox"></div>
+    <div class="grid" id="overview"></div>
+  </section>
+
+  <section class="card" id="localCard">
+    <h2>本地模型</h2>
+    <div class="row"><label for="modelSelect">已安装模型</label><select id="modelSelect"><option value="">读取中…</option></select><button id="models">刷新列表</button></div>
+    <div class="row"><label for="model">模型名称</label><input id="model" type="text" maxlength="80" value="" autocomplete="off"></div>
+    <div class="row"><label>手动安装</label><button id="pull">安装 / 拉取此模型</button><button id="cancelPull" class="danger" disabled>取消安装</button></div>
+    <p class="note">只有点击上方按钮才会下载模型。安装需要 Ollama 和网络；状态检查不会启动或下载模型。</p>
+    <div id="localStatus" class="status"></div>
+    <div class="grid" id="modelStatus" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>行为与隐私</h2>
+    <div class="row"><label for="slot">插入位置（全候选流）</label><input id="slot" type="number" min="1" step="1"><span class="note">默认 5；可位于后续页。</span></div>
+    <div class="row"><label for="wait">停输入触发延迟</label><input id="wait" type="number" min="1" max="200" step="1"><span>毫秒（最多 200）</span></div>
+    <div class="row"><label for="logMode">诊断日志</label><select id="logMode"><option value="off">关闭</option><option value="metadata">仅元数据</option></select></div>
+    <div class="row"><button id="save" class="primary">保存全部设置</button><button id="clearCache">清除内存缓存</button></div>
+  </section>
+
+  <section class="card">
+    <h2>近期状态</h2>
+    <div class="grid" id="recent"></div>
+    <p class="note">此页仅显示非内容状态；不显示或保存输入、拼音、候选、state、模型回答或采纳内容。关闭页面会结束会话并清空页面状态。</p>
+  </section>
+
+  <script nonce="__NONCE__">
+  (() => {
+    const token = location.hash.slice(1);
+    history.replaceState(null, "", location.pathname);
+    const $ = id => document.getElementById(id);
+    const notice = (message, good = null) => { const el=$("notice"); el.textContent=message; el.className="status"+(good===true?" ok":good===false?" bad":""); };
+    if (!/^[A-Za-z0-9_-]{40,128}$/.test(token)) { notice("设置会话令牌缺失或无效。请从开始菜单重新打开此页面。", false); document.querySelectorAll("button,input,select").forEach(el=>el.disabled=true); return; }
+    let settings = null, ending = false, modelRevision = 0, pullTimer = null;
+    const clearSessionView = () => { settings=null; modelRevision++; clearTimeout(pullTimer); $("overview").replaceChildren(); $("recent").replaceChildren(); $("modelStatus").replaceChildren(); $("localStatus").textContent=""; };
+    const request = async (path, method="GET", data=null) => {
+      if(ending)throw new Error("session_expired");
+      const response = await fetch(path, {method, cache:"no-store", headers:{"Authorization":"Bearer "+token, ...(data?{"Content-Type":"application/json"}:{})}, body:data?JSON.stringify(data):undefined});
+      let payload={}; try { payload=await response.json(); } catch {}
+      if (response.status===401) { ending=true; clearSessionView(); notice("设置会话已过期，请从开始菜单重新打开。", false); document.querySelectorAll("button,input,select").forEach(el=>el.disabled=true); throw new Error("session_expired"); }
+      if (!response.ok) throw new Error(payload.error||payload.error_code||"request_failed");
+      return payload;
+    };
+    const statusLabel = value => ({ready:"运行中",busy:"处理中",starting:"启动中",stopped:"已停止",connected:"已连接",available:"可用",unavailable:"不可用",ok:"成功",pending:"处理中",pulling:"正在安装",installed:"已安装",cancelled:"已取消",not_installed:"未安装",unverified:"未验证",failed:"未通过（历史筛选）",accepted:"已验收（独立筛选）",selected:"已提交选择",timeout:"超时",idle:"暂无请求",unknown:"未知"}[value]||"未知");
+    const validationErrors = {"slot must be a positive integer":"插入位置必须是正整数。", "local_wait_ms must be between 1 and 200":"停输入触发延迟必须是 1 到 200 毫秒的整数。", "local_model is invalid":"模型名称格式无效。"};
+    const errorLabel = value => ({ollama_missing:"未找到 Ollama，请先安装 Ollama。",ollama_start_failed:"Ollama 启动失败。",local_unavailable:"本地服务不可用。",local_auth_required:"本地 Ollama 要求认证，暂无法使用。",model_missing:"模型尚未安装。",model_store_unavailable:"无法读取模型库存。",model_version_unavailable:"无法核对模型完整版本。",identity_not_validated:"此模型与当前策略尚未验收，继续使用普通候选。",model_ownership_unavailable:"无法核对模型占用状态。",invalid_model_response:"模型响应无效，继续使用普通候选。",invalid_model_list:"模型列表格式无效。",network_unavailable:"无法连接本地服务。",timeout:"连接超时。",pull_in_progress:"已有安装任务正在运行。",pull_start_failed:"无法启动模型安装。",pull_failed:"模型安装失败，请检查模型名称和网络。",pull_cancel_failed:"取消安装失败，请重试。",invalid_model_name:"模型名称格式无效。",settings_save_failed:"设置保存失败。",session_expired:"设置会话已过期。",operation_unavailable:"操作暂时不可用。",status_unavailable:"无法读取服务状态。",disabled:"模型预测已关闭。",sidecar_stopping:"伴随进程正在退出。",local_only:"首版仅支持本地 Ollama。",invalid_request:"请求无效。",request_failed:"请求失败。",invalid_json:"请求格式无效。",provider_unavailable:"Ollama 服务暂时不可用。",provider_rejected:"Ollama 拒绝此请求。",provider_error:"Ollama 返回错误。",provider_overloaded:"Ollama 服务繁忙。",model_unavailable:"Ollama 未找到此模型。",unauthorized:"Ollama 认证失败。",forbidden:"Ollama 拒绝访问。",rate_limited:"请求过于频繁。",redirect_refused:"本地服务返回了不允许的跳转。",response_too_large:"服务响应过大。"}[value]||validationErrors[value]||"操作失败，请检查本地服务或重新打开设置页。");
+    const metrics = (id, items) => { $(id).replaceChildren(); items.forEach(([title,value])=>{const d=document.createElement("div");d.className="metric";const b=document.createElement("strong");b.textContent=title;const s=document.createElement("span");s.textContent=value;d.append(b,s);$(id).append(d);}); };
+    const renderModel = model => { if(ending)return; metrics("modelStatus", [["验收状态",statusLabel(model.status)], ["模型身份",model.model_identity||"尚无法核对"], ["思考模式","关闭"], ["模型来源",model.source||"尚无来源证据"], ["中文质量",model.quality||"尚无独立验收结果"], ["检查结果",model.error_code?errorLabel(model.error_code):model.eligible?"允许默认关闭试用；日常人工验收待完成。":"继续使用普通候选。"]]); };
+    const loadModelStatus = async () => { const revision=++modelRevision, model=$("model").value.trim(); $("modelStatus").textContent="正在核对模型身份…"; try { const r=await request("/api/action","POST",{action:"model_status",model}); if(!ending&&revision===modelRevision)renderModel(r); } catch(e) { if(!ending&&revision===modelRevision)$("modelStatus").textContent=errorLabel(e.message); } };
+    const renderStatus = data => {
+      const h=data.health||{}, local=h.local||{}, last=h.last_inference||{};
+      if(h.selected_model?.model===$("model").value.trim())renderModel(h.selected_model);
+      const duration=Number.isFinite(last.duration_ms)&&last.duration_ms>=0?`${last.duration_ms.toFixed(1)} 毫秒`:"暂无请求";
+      metrics("overview", [["伴随进程",statusLabel(data.sidecar.state)], ["本地服务",local.error_code?errorLabel(local.error_code):statusLabel(local.status)], ["当前模式","本地 Ollama"], ["最近请求",statusLabel(last.status)], ["最近推理耗时",duration]]);
+      const adopted=typeof last.adopted==="boolean"?(last.adopted?"已采纳模型预测":"选择了普通候选"):"暂无选择记录";
+      const items=[["伴随进程",statusLabel(data.sidecar.state)], ["最近结果",statusLabel(last.status)], ["耗时",duration], ["错误",last.error_code?errorLabel(last.error_code):"无"], ["后端",last.backend||"—"], ["服务商",last.provider||"—"], ["是否采纳",adopted]];
+      $("recent").replaceChildren(); items.forEach(([title,value])=>{const d=document.createElement("div");d.className="metric";const b=document.createElement("strong");b.textContent=title;const s=document.createElement("span");s.textContent=value;d.append(b,s);$("recent").append(d);});
+    };
+    const render = data => {
+      if(ending)return;
+      settings=data.settings;
+      $("enabled").checked=settings.enabled; $("model").value=settings.local_model; $("slot").value=settings.slot; $("wait").value=settings.local_wait_ms; $("logMode").value=settings.log_mode;
+      renderStatus(data);
+      notice("设置已读取。",true);
+    };
+    const load = async () => { try { render(await request("/api/settings")); await loadModels(); await loadModelStatus(); await pollPull(); } catch(e) { if(!ending) notice(errorLabel(e.message),false); } };
+    const loadModels = async () => { try { const r=await request("/api/action","POST",{action:"models"}); if(ending)return; const select=$("modelSelect"); select.replaceChildren(); const models=r.local?.models||[]; if(!models.length){const o=document.createElement("option");o.value="";o.textContent=r.local?.error_code?errorLabel(r.local.error_code):"未发现已安装模型";select.append(o);} models.forEach(m=>{const o=document.createElement("option");o.value=m.name;o.textContent=m.name;select.append(o);}); if(settings) select.value=$("model").value.trim(); } catch(e) { if(!ending)$("localStatus").textContent=errorLabel(e.message); } };
+    $("modelSelect").addEventListener("change",()=>{if($("modelSelect").value)$("model").value=$("modelSelect").value;loadModelStatus();});
+    $("model").addEventListener("input",()=>{modelRevision++;$("modelStatus").textContent="模型名称已更改，等待核对。";});
+    $("model").addEventListener("change",loadModelStatus);
+    $("models").addEventListener("click",loadModels); $("refresh").addEventListener("click",load);
+    $("save").addEventListener("click",async()=>{try{const body={...settings,enabled:$("enabled").checked,backend:"local",local_model:$("model").value.trim(),provider:null,slot:Number($("slot").value),local_wait_ms:Number($("wait").value),log_mode:$("logMode").value};const r=await request("/api/settings","POST",body);if(r.status==="ok"){settings=body;notice("已保存；后续输入立即采用新设置。",true);}}catch(e){notice(errorLabel(e.message),false);}});
+    $("pull").addEventListener("click",async()=>{const model=$("model").value.trim();if(!model)return notice("请先填写模型名称。",false);if(!confirm(`现在从 Ollama 拉取模型 ${model}？这会下载模型文件并占用网络与磁盘。`))return;$("pull").disabled=true;try{const r=await request("/api/action","POST",{action:"pull_model",model});if(ending)return;renderPull(r);if(r.status==="pulling")pollPull();}catch(e){if(!ending){$("pull").disabled=false;$("localStatus").textContent=errorLabel(e.message);}}});
+    function renderPull(r){if(ending)return;const active=r.status==="pulling"||r.error_code==="pull_cancel_failed";$("pull").disabled=active;$("cancelPull").disabled=!active;$("localStatus").textContent=r.status==="pulling"?`正在安装 ${r.model}…`:r.status==="installed"?`${r.model} 安装完成。`:r.status==="cancelled"?"安装已取消；已下载的文件由 Ollama 管理。":r.error_code?errorLabel(r.error_code):"暂无安装任务";}
+    async function pollPull(){clearTimeout(pullTimer);if(ending)return;try{const r=await request("/api/action","POST",{action:"pull_status"});if(ending)return;renderPull(r);if(r.status==="pulling")pullTimer=setTimeout(pollPull,2000);else if(r.status==="installed"){await loadModels();await loadModelStatus();}}catch(e){if(!ending)$("localStatus").textContent=errorLabel(e.message);}}
+    $("cancelPull").addEventListener("click",async()=>{clearTimeout(pullTimer);try{renderPull(await request("/api/action","POST",{action:"cancel_pull"}));}catch(e){if(!ending)$("localStatus").textContent=errorLabel(e.message);}});
+    $("clearCache").addEventListener("click",async()=>{try{const r=await request("/api/action","POST",{action:"clear_cache"});notice(r.status==="ok"?"内存缓存已清除。":errorLabel(r.error_code),r.status==="ok");}catch(e){notice(errorLabel(e.message),false);}});
+    const endSession=async()=>{if(ending)return;ending=true;try{await fetch("/api/session/end",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:"{}",keepalive:true});}catch{}clearSessionView();notice("设置会话已结束。",true);document.querySelectorAll("button,input,select").forEach(el=>el.disabled=true);};
+    $("end").addEventListener("click",endSession); window.addEventListener("pagehide",()=>{if(!ending){fetch("/api/session/end",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:"{}",keepalive:true}).catch(()=>{});}});
+    load(); const heartbeat=setInterval(()=>{if(!ending)request("/api/settings").then(data=>{if(!ending)renderStatus(data);}).catch(()=>clearInterval(heartbeat));},15000);
+  })();
+  </script>
+</body>
+</html>

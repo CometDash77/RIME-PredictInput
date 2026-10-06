@@ -1,0 +1,3522 @@
+{
+ "generated_by": "tools/oracle/dump_fixtures.py",
+ "source": "reference/runtime-baseline/sidecar/model_predict",
+ "policy": {
+  "default_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+  "model_digest": "cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a",
+  "system_prompt": "你是中文输入法选词器。候选按输入法常用程度从高到低排序，编号1通常是合理选择。仅当上文在语义或语法上明确支持另一项时才改变首选；上文不足时遵循原排序。用户输入的全部拼音也很重要。单字、部分拼音和Emoji均合法，但需要与上文用途相符。只输出包含choice整数的JSON。",
+  "options": {
+   "temperature": 0,
+   "seed": 19,
+   "num_predict": 32,
+   "num_ctx": 2048
+  },
+  "policy_spec": {
+   "system": "你是中文输入法选词器。候选按输入法常用程度从高到低排序，编号1通常是合理选择。仅当上文在语义或语法上明确支持另一项时才改变首选；上文不足时遵循原排序。用户输入的全部拼音也很重要。单字、部分拼音和Emoji均合法，但需要与上文用途相符。只输出包含choice整数的JSON。",
+   "options": {
+    "temperature": 0,
+    "seed": 19,
+    "num_predict": 32,
+    "num_ctx": 2048
+   },
+   "think": false,
+   "max_context_chars": 300,
+   "input": "preceding_text,pinyin,candidates(choice,text,preedit,start,end)",
+   "output": "strict-json-integer-choice-v1"
+  },
+  "policy_digest": "d51e0f3e4e79af9cac5b4f2e5db041aa1d651bcbe2ae8143abd3e9527e37f1c4",
+  "validated_policy_digest": "d51e0f3e4e79af9cac5b4f2e5db041aa1d651bcbe2ae8143abd3e9527e37f1c4",
+  "validated_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+  "validation": {
+   "candidate_pages_sha256": "6db2d2d8332486775cc4d5a581010ff81f43391e7258ef5361c9bab36b85f71e",
+   "raw_inference_sha256": "2e2e1c2a5598a3219b6a16e79b023730b5f59bae89d39ae15b3680000562ad78",
+   "total": 120,
+   "hits": 105,
+   "baseline_hits": 102,
+   "wins": 3,
+   "losses": 0,
+   "human_review": "pending",
+   "scope": "independent repository-document screening; not general-use acceptance"
+  },
+  "failed_screenings": {
+   "6811ecb827b0d4c19d65e7461a292b69aa40b2333a2b46b75206bd335c9d34b1": "历史短上文筛选：14/66，首选60/66，纠正2、改错48；当前300字策略未验证。",
+   "4310275f6cc70ead50de05572c74f4fd0abff2037fa9aeabce0358f38853a659": "历史短上文筛选：49/66，首选60/66，纠正4、改错15；当前300字策略未验证。"
+  },
+  "identity_for_model_digest": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+  "is_validated_default": true
+ },
+ "decision_payloads": [
+  {
+   "name": "valid_with_fields",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "dianyin",
+      "start": 4,
+      "end": 11
+     },
+     {
+      "preedit": "dianyong",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "dianzu",
+      "start": 4,
+      "end": 10
+     },
+     {
+      "preedit": "diangong",
+      "start": 4,
+      "end": 11
+     }
+    ]
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "5aaabea4752baaa01c10cf5cb9a9359ed67833ef2ecc06d00e552b8b6f1e68a7",
+   "candidates_digest": "b602caa594b54179b93ed90b1cbd822f68f63d6c368a23dea212f33eb5944e48"
+  },
+  {
+   "name": "valid_without_fields",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "5aaabea4752baaa01c10cf5cb9a9359ed67833ef2ecc06d00e552b8b6f1e68a7",
+   "candidates_digest": "da95cd55f7510363b683905eea2d76e7eb9f178c20a997e8858fd3b8220a9f91"
+  },
+  {
+   "name": "candidate_fields_null_is_absent",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": null
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "5aaabea4752baaa01c10cf5cb9a9359ed67833ef2ecc06d00e552b8b6f1e68a7",
+   "candidates_digest": "da95cd55f7510363b683905eea2d76e7eb9f178c20a997e8858fd3b8220a9f91"
+  },
+  {
+   "name": "payload_is_list",
+   "payload": [],
+   "result": {
+    "ok": false,
+    "code": "invalid_prediction_payload"
+   }
+  },
+  {
+   "name": "state_has_extra_key",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying",
+     "extra": 1
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_state"
+   }
+  },
+  {
+   "name": "state_missing_pinyin",
+   "payload": {
+    "state": {
+     "task": "t",
+     "preceding_text": "x"
+    },
+    "candidates": [
+     "a"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_state"
+   }
+  },
+  {
+   "name": "state_task_empty",
+   "payload": {
+    "state": {
+     "task": "",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_state"
+   }
+  },
+  {
+   "name": "state_task_too_long",
+   "payload": {
+    "state": {
+     "task": "长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_state"
+   }
+  },
+  {
+   "name": "state_preceding_too_long",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_state"
+   }
+  },
+  {
+   "name": "state_preceding_at_limit",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上上",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ]
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "d80e07322d598e98933aaa77c4c11c9c938c4988071dda7e699ccd745a1c6506",
+   "candidates_digest": "da95cd55f7510363b683905eea2d76e7eb9f178c20a997e8858fd3b8220a9f91"
+  },
+  {
+   "name": "candidates_empty",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": []
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidates"
+   }
+  },
+  {
+   "name": "candidate_empty_text",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     ""
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidates"
+   }
+  },
+  {
+   "name": "candidate_too_long",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长"
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidates"
+   }
+  },
+  {
+   "name": "candidate_at_limit",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长"
+    ]
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "5aaabea4752baaa01c10cf5cb9a9359ed67833ef2ecc06d00e552b8b6f1e68a7",
+   "candidates_digest": "8dd755135583653be47becaa71431fc2f1c1af6d786ca9f49fdb1ed9fdac9858"
+  },
+  {
+   "name": "candidates_not_strings",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     1
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidates"
+   }
+  },
+  {
+   "name": "fields_length_mismatch",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "dianyin",
+      "start": 4,
+      "end": 11
+     }
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidate_fields"
+   }
+  },
+  {
+   "name": "fields_extra_key",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12,
+      "extra": 1
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12,
+      "extra": 1
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12,
+      "extra": 1
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12,
+      "extra": 1
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12,
+      "extra": 1
+     }
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidate_fields"
+   }
+  },
+  {
+   "name": "fields_start_not_less_than_end",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 9,
+      "end": 9
+     },
+     {
+      "preedit": "dianying",
+      "start": 9,
+      "end": 9
+     },
+     {
+      "preedit": "dianying",
+      "start": 9,
+      "end": 9
+     },
+     {
+      "preedit": "dianying",
+      "start": 9,
+      "end": 9
+     },
+     {
+      "preedit": "dianying",
+      "start": 9,
+      "end": 9
+     }
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidate_fields"
+   }
+  },
+  {
+   "name": "fields_end_over_limit",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 257
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 257
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 257
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 257
+     },
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 257
+     }
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidate_fields"
+   }
+  },
+  {
+   "name": "fields_start_is_bool",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": true,
+      "end": 12
+     },
+     {
+      "preedit": "dianying",
+      "start": true,
+      "end": 12
+     },
+     {
+      "preedit": "dianying",
+      "start": true,
+      "end": 12
+     },
+     {
+      "preedit": "dianying",
+      "start": true,
+      "end": 12
+     },
+     {
+      "preedit": "dianying",
+      "start": true,
+      "end": 12
+     }
+    ]
+   },
+   "result": {
+    "ok": false,
+    "code": "invalid_candidate_fields"
+   }
+  },
+  {
+   "name": "fields_emoji_preedit",
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "🙂dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "🙂dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "🙂dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "🙂dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "🙂dianying",
+      "start": 4,
+      "end": 12
+     }
+    ]
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": "DecisionInput"
+   },
+   "state_digest": "5aaabea4752baaa01c10cf5cb9a9359ed67833ef2ecc06d00e552b8b6f1e68a7",
+   "candidates_digest": "aee3ac2d025fdc214a8bcb4ef78add8b9939d3deec978a27fa0ddd6ed95ea9d0"
+  }
+ ],
+ "settings_mappings": [
+  {
+   "name": "empty",
+   "mapping": {},
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "enabled": false,
+     "backend": "local",
+     "provider": null,
+     "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+     "slot": 5,
+     "local_wait_ms": 150,
+     "thresholds": {},
+     "log_mode": "metadata"
+    }
+   }
+  },
+  {
+   "name": "enabled_only",
+   "mapping": {
+    "enabled": true
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "enabled": true,
+     "backend": "local",
+     "provider": null,
+     "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+     "slot": 5,
+     "local_wait_ms": 150,
+     "thresholds": {},
+     "log_mode": "metadata"
+    }
+   }
+  },
+  {
+   "name": "full",
+   "mapping": {
+    "enabled": true,
+    "backend": "local",
+    "provider": null,
+    "local_model": "m:1",
+    "slot": 3,
+    "local_wait_ms": 120,
+    "thresholds": {
+     "a:b": 0.5
+    },
+    "log_mode": "off"
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "enabled": true,
+     "backend": "local",
+     "provider": null,
+     "local_model": "m:1",
+     "slot": 3,
+     "local_wait_ms": 120,
+     "thresholds": {
+      "a:b": 0.5
+     },
+     "log_mode": "off"
+    }
+   }
+  },
+  {
+   "name": "slot_zero",
+   "mapping": {
+    "slot": 0
+   },
+   "result": {
+    "ok": false,
+    "code": "slot must be a positive integer"
+   }
+  },
+  {
+   "name": "slot_negative",
+   "mapping": {
+    "slot": -1
+   },
+   "result": {
+    "ok": false,
+    "code": "slot must be a positive integer"
+   }
+  },
+  {
+   "name": "slot_too_large",
+   "mapping": {
+    "slot": 2147483648
+   },
+   "result": {
+    "ok": false,
+    "code": "slot must be a positive integer"
+   }
+  },
+  {
+   "name": "slot_bool",
+   "mapping": {
+    "slot": true
+   },
+   "result": {
+    "ok": false,
+    "code": "slot must be a positive integer"
+   }
+  },
+  {
+   "name": "wait_zero",
+   "mapping": {
+    "local_wait_ms": 0
+   },
+   "result": {
+    "ok": false,
+    "code": "local_wait_ms must be between 1 and 200"
+   }
+  },
+  {
+   "name": "wait_too_large",
+   "mapping": {
+    "local_wait_ms": 201
+   },
+   "result": {
+    "ok": false,
+    "code": "local_wait_ms must be between 1 and 200"
+   }
+  },
+  {
+   "name": "wait_bool",
+   "mapping": {
+    "local_wait_ms": true
+   },
+   "result": {
+    "ok": false,
+    "code": "local_wait_ms must be between 1 and 200"
+   }
+  },
+  {
+   "name": "enabled_string",
+   "mapping": {
+    "enabled": "true"
+   },
+   "result": {
+    "ok": false,
+    "code": "enabled must be a boolean"
+   }
+  },
+  {
+   "name": "backend_cloud",
+   "mapping": {
+    "backend": "cloud"
+   },
+   "result": {
+    "ok": false,
+    "code": "local_only"
+   }
+  },
+  {
+   "name": "provider_set",
+   "mapping": {
+    "provider": "openai"
+   },
+   "result": {
+    "ok": false,
+    "code": "local_only"
+   }
+  },
+  {
+   "name": "unknown_field",
+   "mapping": {
+    "extra": 1
+   },
+   "result": {
+    "ok": false,
+    "code": "settings contain unsupported fields"
+   }
+  },
+  {
+   "name": "secret_top_level",
+   "mapping": {
+    "api_key": "x"
+   },
+   "result": {
+    "ok": false,
+    "code": "secrets are not supported in local settings"
+   }
+  },
+  {
+   "name": "secret_nested",
+   "mapping": {
+    "thresholds": {
+     "a:Token": 0.5,
+     "b": {
+      "token": "x"
+     }
+    }
+   },
+   "result": {
+    "ok": false,
+    "code": "secrets are not supported in local settings"
+   }
+  },
+  {
+   "name": "log_mode_invalid",
+   "mapping": {
+    "log_mode": "full"
+   },
+   "result": {
+    "ok": false,
+    "code": "log_mode must be off or metadata"
+   }
+  },
+  {
+   "name": "thresholds_too_many",
+   "mapping": {
+    "thresholds": {
+     "k0": 0.5,
+     "k1": 0.5,
+     "k2": 0.5,
+     "k3": 0.5,
+     "k4": 0.5,
+     "k5": 0.5,
+     "k6": 0.5,
+     "k7": 0.5,
+     "k8": 0.5,
+     "k9": 0.5,
+     "k10": 0.5,
+     "k11": 0.5,
+     "k12": 0.5,
+     "k13": 0.5,
+     "k14": 0.5,
+     "k15": 0.5,
+     "k16": 0.5
+    }
+   },
+   "result": {
+    "ok": false,
+    "code": "thresholds must be a small object"
+   }
+  },
+  {
+   "name": "threshold_identity_bad",
+   "mapping": {
+    "thresholds": {
+     "bad identity!": 0.5
+    }
+   },
+   "result": {
+    "ok": false,
+    "code": "threshold identity is invalid"
+   }
+  },
+  {
+   "name": "threshold_value_bad",
+   "mapping": {
+    "thresholds": {
+     "a:b": 1.5
+    }
+   },
+   "result": {
+    "ok": false,
+    "code": "threshold must be a finite number between zero and one"
+   }
+  },
+  {
+   "name": "threshold_value_string",
+   "mapping": {
+    "thresholds": {
+     "a:b": "0.5"
+    }
+   },
+   "result": {
+    "ok": false,
+    "code": "threshold must be a finite number between zero and one"
+   }
+  },
+  {
+   "name": "local_model_padded",
+   "mapping": {
+    "local_model": "  m:1  "
+   },
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "enabled": false,
+     "backend": "local",
+     "provider": null,
+     "local_model": "m:1",
+     "slot": 5,
+     "local_wait_ms": 150,
+     "thresholds": {},
+     "log_mode": "metadata"
+    }
+   }
+  },
+  {
+   "name": "local_model_empty",
+   "mapping": {
+    "local_model": ""
+   },
+   "result": {
+    "ok": false,
+    "code": "local_model is invalid"
+   }
+  },
+  {
+   "name": "local_model_too_long",
+   "mapping": {
+    "local_model": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   },
+   "result": {
+    "ok": false,
+    "code": "local_model is invalid"
+   }
+  },
+  {
+   "name": "local_model_bad_char",
+   "mapping": {
+    "local_model": "m odel"
+   },
+   "result": {
+    "ok": false,
+    "code": "local_model is invalid"
+   }
+  },
+  {
+   "name": "not_an_object",
+   "mapping": [],
+   "result": {
+    "ok": false,
+    "code": "settings must be a JSON object"
+   }
+  }
+ ],
+ "requests": [
+  {
+   "name": "valid_predict",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "version": 1,
+     "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "seq": 1,
+     "request_id": "ffffffffffffffffffffffffffffffff",
+     "kind": "predict",
+     "sent_at": 1000.5,
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "valid_health",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"health\",\"sent_at\":1000.5,\"payload\":{}}",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "version": 1,
+     "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "seq": 1,
+     "request_id": "ffffffffffffffffffffffffffffffff",
+     "kind": "health",
+     "sent_at": 1000.5,
+     "payload": {}
+    }
+   }
+  },
+  {
+   "name": "version_unsupported",
+   "raw": "{\"version\":2,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "unsupported request envelope"
+   }
+  },
+  {
+   "name": "engine_id_too_long",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid engine id"
+   }
+  },
+  {
+   "name": "engine_id_bad_char",
+   "raw": "{\"version\":1,\"engine_id\":\"a.b\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid engine id"
+   }
+  },
+  {
+   "name": "seq_zero",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":0,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request sequence"
+   }
+  },
+  {
+   "name": "seq_bool",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":true,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request sequence"
+   }
+  },
+  {
+   "name": "seq_string",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":\"1\",\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request sequence"
+   }
+  },
+  {
+   "name": "request_id_uppercase",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request id"
+   }
+  },
+  {
+   "name": "request_id_short",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"fffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request id"
+   }
+  },
+  {
+   "name": "kind_unknown",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"shutdown\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request kind"
+   }
+  },
+  {
+   "name": "sent_at_zero",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request timestamp"
+   }
+  },
+  {
+   "name": "sent_at_bool",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":true,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request timestamp"
+   }
+  },
+  {
+   "name": "sent_at_string",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":\"1000\",\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request timestamp"
+   }
+  },
+  {
+   "name": "payload_is_list",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":[]}",
+   "result": {
+    "ok": false,
+    "code": "request payload must be an object"
+   }
+  },
+  {
+   "name": "payload_has_secret",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"token\":\"x\"}}",
+   "result": {
+    "ok": false,
+    "code": "secrets are not allowed in IPC"
+   }
+  },
+  {
+   "name": "missing_kind",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "invalid request kind"
+   }
+  },
+  {
+   "name": "extra_key",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]},\"extra\":1}",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "version": 1,
+     "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "seq": 1,
+     "request_id": "ffffffffffffffffffffffffffffffff",
+     "kind": "predict",
+     "sent_at": 1000.5,
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "chat_requests": [
+  {
+   "name": "default_model",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+     "stream": false,
+     "think": false,
+     "keep_alive": "60s",
+     "messages": [
+      {
+       "role": "system",
+       "content": "你是中文输入法选词器。候选按输入法常用程度从高到低排序，编号1通常是合理选择。仅当上文在语义或语法上明确支持另一项时才改变首选；上文不足时遵循原排序。用户输入的全部拼音也很重要。单字、部分拼音和Emoji均合法，但需要与上文用途相符。只输出包含choice整数的JSON。"
+      },
+      {
+       "role": "user",
+       "content": "{\"preceding_text\": \"我们今天去看\", \"pinyin\": \"dianying\", \"candidates\": [{\"choice\": 1, \"text\": \"电影\", \"preedit\": \"dianying\", \"start\": 4, \"end\": 12}, {\"choice\": 2, \"text\": \"电源\", \"preedit\": \"dianyin\", \"start\": 4, \"end\": 11}, {\"choice\": 3, \"text\": \"电涌\", \"preedit\": \"dianyong\", \"start\": 4, \"end\": 12}, {\"choice\": 4, \"text\": \"电阻\", \"preedit\": \"dianzu\", \"start\": 4, \"end\": 10}, {\"choice\": 5, \"text\": \"电工\", \"preedit\": \"diangong\", \"start\": 4, \"end\": 11}]}"
+      }
+     ],
+     "format": {
+      "type": "object",
+      "properties": {
+       "choice": {
+        "type": "integer",
+        "enum": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ]
+       }
+      },
+      "required": [
+       "choice"
+      ],
+      "additionalProperties": false
+     },
+     "options": {
+      "temperature": 0,
+      "seed": 19,
+      "num_predict": 32,
+      "num_ctx": 2048
+     }
+    }
+   }
+  },
+  {
+   "name": "custom_model",
+   "model": "some/model:tag",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "model": "some/model:tag",
+     "stream": false,
+     "think": false,
+     "keep_alive": "60s",
+     "messages": [
+      {
+       "role": "system",
+       "content": "你是中文输入法选词器。候选按输入法常用程度从高到低排序，编号1通常是合理选择。仅当上文在语义或语法上明确支持另一项时才改变首选；上文不足时遵循原排序。用户输入的全部拼音也很重要。单字、部分拼音和Emoji均合法，但需要与上文用途相符。只输出包含choice整数的JSON。"
+      },
+      {
+       "role": "user",
+       "content": "{\"preceding_text\": \"我们今天去看\", \"pinyin\": \"dianying\", \"candidates\": [{\"choice\": 1, \"text\": \"电影\", \"preedit\": \"dianying\", \"start\": 4, \"end\": 12}, {\"choice\": 2, \"text\": \"电源\", \"preedit\": \"dianyin\", \"start\": 4, \"end\": 11}, {\"choice\": 3, \"text\": \"电涌\", \"preedit\": \"dianyong\", \"start\": 4, \"end\": 12}, {\"choice\": 4, \"text\": \"电阻\", \"preedit\": \"dianzu\", \"start\": 4, \"end\": 10}, {\"choice\": 5, \"text\": \"电工\", \"preedit\": \"diangong\", \"start\": 4, \"end\": 11}]}"
+      }
+     ],
+     "format": {
+      "type": "object",
+      "properties": {
+       "choice": {
+        "type": "integer",
+        "enum": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ]
+       }
+      },
+      "required": [
+       "choice"
+      ],
+      "additionalProperties": false
+     },
+     "options": {
+      "temperature": 0,
+      "seed": 19,
+      "num_predict": 32,
+      "num_ctx": 2048
+     }
+    }
+   }
+  },
+  {
+   "name": "single_candidate",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "result": {
+    "ok": true,
+    "code": null,
+    "value": {
+     "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+     "stream": false,
+     "think": false,
+     "keep_alive": "60s",
+     "messages": [
+      {
+       "role": "system",
+       "content": "你是中文输入法选词器。候选按输入法常用程度从高到低排序，编号1通常是合理选择。仅当上文在语义或语法上明确支持另一项时才改变首选；上文不足时遵循原排序。用户输入的全部拼音也很重要。单字、部分拼音和Emoji均合法，但需要与上文用途相符。只输出包含choice整数的JSON。"
+      },
+      {
+       "role": "user",
+       "content": "{\"preceding_text\": \"我们今天去看\", \"pinyin\": \"dianying\", \"candidates\": [{\"choice\": 1, \"text\": \"电影\", \"preedit\": \"dianying\", \"start\": 4, \"end\": 12}]}"
+      }
+     ],
+     "format": {
+      "type": "object",
+      "properties": {
+       "choice": {
+        "type": "integer",
+        "enum": [
+         1
+        ]
+       }
+      },
+      "required": [
+       "choice"
+      ],
+      "additionalProperties": false
+     },
+     "options": {
+      "temperature": 0,
+      "seed": 19,
+      "num_predict": 32,
+      "num_ctx": 2048
+     }
+    }
+   }
+  },
+  {
+   "name": "candidate_fields_missing",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "result": {
+    "ok": false,
+    "code": "candidate_fields_missing"
+   }
+  }
+ ],
+ "responses": {
+  "settings_file_bytes": "{\n  \"enabled\": true,\n  \"backend\": \"local\",\n  \"provider\": null,\n  \"local_model\": \"hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M\",\n  \"slot\": 3,\n  \"local_wait_ms\": 150,\n  \"thresholds\": {},\n  \"log_mode\": \"metadata\"\n}",
+  "settings_file_no_overwrite_bytes": "{\n  \"enabled\": false,\n  \"backend\": \"local\",\n  \"provider\": null,\n  \"local_model\": \"hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M\",\n  \"slot\": 5,\n  \"local_wait_ms\": 150,\n  \"thresholds\": {},\n  \"log_mode\": \"metadata\"\n}",
+  "request_files": {
+   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-019c1a26fcdc37fc4ae3f325f936dadb.json": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"019c1a26fcdc37fc4ae3f325f936dadb\",\"kind\":\"predict\",\"sent_at\":1000.0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}"
+  },
+  "request_tree": [
+   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-019c1a26fcdc37fc4ae3f325f936dadb.json"
+  ],
+  "request_to_mapping": {
+   "version": 1,
+   "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "seq": 1,
+   "request_id": "019c1a26fcdc37fc4ae3f325f936dadb",
+   "kind": "predict",
+   "sent_at": 1000.0,
+   "payload": {
+    "state": {
+     "task": "中文输入法候选选择",
+     "preceding_text": "我们今天去看",
+     "pinyin": "dianying"
+    },
+    "candidates": [
+     "电影",
+     "电源",
+     "电涌",
+     "电阻",
+     "电工"
+    ],
+    "candidate_fields": [
+     {
+      "preedit": "dianying",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "dianyin",
+      "start": 4,
+      "end": 11
+     },
+     {
+      "preedit": "dianyong",
+      "start": 4,
+      "end": 12
+     },
+     {
+      "preedit": "dianzu",
+      "start": 4,
+      "end": 10
+     },
+     {
+      "preedit": "diangong",
+      "start": 4,
+      "end": 11
+     }
+    ]
+   }
+  },
+  "publish_ok": true,
+  "response_files": {
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.json": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"019c1a26fcdc37fc4ae3f325f936dadb\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.ready": "{\"version\":1,\"seq\":1,\"ts\":1001.25,\"bytes\":189,\"sha256\":\"19bbc6225df965f1c465ee050a834027e04642bec635ea23fe73a54f70471150\"}"
+  },
+  "response_tree": [
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.json",
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.ready"
+  ],
+  "read_latest": {
+   "version": 1,
+   "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "seq": 1,
+   "request_id": "019c1a26fcdc37fc4ae3f325f936dadb",
+   "created_at": 1001.25,
+   "payload": {
+    "status": "ok",
+    "backend": "local"
+   }
+  },
+  "consume_ok": true,
+  "consume_wrong_id_refused": false,
+  "response_tree_after_consume": [
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "publish_stale_refused": true,
+  "publish_newest_ok": true,
+  "publish_first_ok": true,
+  "publish_older_refused": false,
+  "publish_same_seq_other_id_refused": false,
+  "latest_seq_after_refusals": 2,
+  "request_bytes_fractional": "{\"version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a9ee67d50fb00cfc42ea482e1a8fc3b3\",\"kind\":\"predict\",\"sent_at\":1000.25,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+  "publish_response_fractional_ok": true,
+  "response_bytes_fractional": "{\"version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a9ee67d50fb00cfc42ea482e1a8fc3b3\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
+  "ready_bytes_fractional": "{\"version\":1,\"seq\":7,\"ts\":1001.25,\"bytes\":189,\"sha256\":\"1a72d799379e984e4ed8bb56819cdbbced734e946bfb5b3576fb3b285f01e143\"}",
+  "read_latest_fractional": {
+   "version": 1,
+   "engine_id": "cccccccccccccccccccccccccccccccccccccccc",
+   "seq": 7,
+   "request_id": "a9ee67d50fb00cfc42ea482e1a8fc3b3",
+   "created_at": 1001.25,
+   "payload": {
+    "status": "ok",
+    "backend": "local"
+   }
+  }
+ },
+ "inference": {
+  "health_unavailable": {
+   "status": "ready",
+   "backend": "local",
+   "local": {
+    "status": "unavailable",
+    "error_code": "ollama_missing"
+   },
+   "selected_model": {
+    "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+    "status": "unverified",
+    "eligible": false,
+    "thinking": false,
+    "source": "尚无此模型的中文选词专项训练证明。",
+    "quality": "当前固定策略尚未独立验收。",
+    "error_code": "model_store_unavailable"
+   },
+   "cache_entries": 0,
+   "last_inference": {
+    "status": "idle"
+   }
+  },
+  "health_accepted": {
+   "status": "ready",
+   "backend": "local",
+   "local": {
+    "status": "connected",
+    "provider": "local",
+    "version": "0.12.0"
+   },
+   "selected_model": {
+    "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+    "status": "accepted",
+    "eligible": true,
+    "thinking": false,
+    "source": "HauhauCS Qwen3.5-2B Uncensored Aggressive；作者声明uncensored，未证明中文选词专项微调。",
+    "quality": "固定中文提示词与300字上文独立筛选：105/120，首选102/120，纠正3、改错0；人工试用待完成。",
+    "digest": "cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a",
+    "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+    "validation": {
+     "candidate_pages_sha256": "6db2d2d8332486775cc4d5a581010ff81f43391e7258ef5361c9bab36b85f71e",
+     "raw_inference_sha256": "2e2e1c2a5598a3219b6a16e79b023730b5f59bae89d39ae15b3680000562ad78",
+     "total": 120,
+     "hits": 105,
+     "baseline_hits": 102,
+     "wins": 3,
+     "losses": 0,
+     "human_review": "pending",
+     "scope": "independent repository-document screening; not general-use acceptance"
+    }
+   },
+   "cache_entries": 0,
+   "last_inference": {
+    "status": "idle"
+   }
+  },
+  "model_status_accepted": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "accepted",
+   "eligible": true,
+   "thinking": false,
+   "source": "HauhauCS Qwen3.5-2B Uncensored Aggressive；作者声明uncensored，未证明中文选词专项微调。",
+   "quality": "固定中文提示词与300字上文独立筛选：105/120，首选102/120，纠正3、改错0；人工试用待完成。",
+   "digest": "cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "validation": {
+    "candidate_pages_sha256": "6db2d2d8332486775cc4d5a581010ff81f43391e7258ef5361c9bab36b85f71e",
+    "raw_inference_sha256": "2e2e1c2a5598a3219b6a16e79b023730b5f59bae89d39ae15b3680000562ad78",
+    "total": 120,
+    "hits": 105,
+    "baseline_hits": 102,
+    "wins": 3,
+    "losses": 0,
+    "human_review": "pending",
+    "scope": "independent repository-document screening; not general-use acceptance"
+   }
+  },
+  "model_status_explicit": {
+   "model": "some/model:tag",
+   "status": "not_installed",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "当前固定策略尚未独立验收。",
+   "error_code": "model_missing"
+  },
+  "model_status_failed_screening": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "failed",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "历史短上文筛选：14/66，首选60/66，纠正2、改错48；当前300字策略未验证。",
+   "digest": "6811ecb827b0d4c19d65e7461a292b69aa40b2333a2b46b75206bd335c9d34b1",
+   "model_identity": "ollama:586a52521fba63b0fd1ad7b52fa9878fb8d0f0256ab7938a4fa21787439a11f1"
+  },
+  "model_status_unknown_digest": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "unverified",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "当前固定策略尚未独立验收。",
+   "error_code": "model_version_unavailable"
+  },
+  "model_status_unverified": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "unverified",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "当前固定策略尚未独立验收。",
+   "digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+   "model_identity": "ollama:d1b21046b5635b395fcb9cb3c02beaabca9ad4a66c01ea380fac9aa55abba87e"
+  },
+  "model_status_not_installed": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "not_installed",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "当前固定策略尚未独立验收。",
+   "error_code": "model_missing"
+  },
+  "model_status_invalid_name": {
+   "status": "unavailable",
+   "error_code": "invalid_model_name",
+   "eligible": false
+  },
+  "model_status_store_unavailable": {
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "status": "unverified",
+   "eligible": false,
+   "thinking": false,
+   "source": "尚无此模型的中文选词专项训练证明。",
+   "quality": "当前固定策略尚未独立验收。",
+   "error_code": "model_store_unavailable"
+  },
+  "predict_disabled": {
+   "status": "unavailable",
+   "backend": "local",
+   "error_code": "disabled"
+  },
+  "predict_local_only": {
+   "status": "unavailable",
+   "error_code": "local_only"
+  },
+  "predict_resolve_error": {
+   "status": "unavailable",
+   "backend": "local",
+   "error_code": "ollama_missing"
+  },
+  "predict_identity_not_validated": {
+   "status": "unavailable",
+   "backend": "local",
+   "error_code": "identity_not_validated",
+   "model_identity": "ollama:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+   "eligible": false,
+   "calibrated": false
+  },
+  "predict_infer_unavailable": {
+   "status": "unavailable",
+   "error_code": "provider_unavailable"
+  },
+  "predict_ok": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "choice": "2",
+   "requested_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": false,
+   "calibrated": false,
+   "validated": true,
+   "eligible": true,
+   "human_review": "pending"
+  },
+  "predict_bad_payload": {
+   "status": "unavailable",
+   "error_code": "invalid_candidates"
+  },
+  "predict_cache_miss": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "choice": "2",
+   "requested_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": false,
+   "calibrated": false,
+   "validated": true,
+   "eligible": true,
+   "human_review": "pending"
+  },
+  "predict_cache_hit": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "choice": "2",
+   "requested_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": true,
+   "calibrated": false,
+   "validated": true,
+   "eligible": true,
+   "human_review": "pending"
+  },
+  "predict_cache_entries": 1,
+  "status_after_predict": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": true,
+   "calibrated": false,
+   "eligible": true,
+   "has_duration_ms": true
+  },
+  "status_current": {
+   "status": "idle"
+  },
+  "action_selection_accepted": {
+   "status": "ok"
+  },
+  "status_after_selection": {
+   "status": "selected",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": true,
+   "calibrated": false,
+   "eligible": true,
+   "adopted": true,
+   "has_duration_ms": true
+  },
+  "action_selection_stale": {
+   "status": "ok",
+   "ignored": true
+  },
+  "action_selection_unknown": {
+   "status": "ok",
+   "ignored": true
+  },
+  "action_selection_invalid": {
+   "status": "unavailable",
+   "error_code": "invalid_selection_event"
+  },
+  "action_cancel_prediction": {
+   "status": "ok"
+  },
+  "action_cancel_prediction_unknown": {
+   "status": "ok"
+  },
+  "action_cancel_prediction_invalid": {
+   "status": "unavailable",
+   "error_code": "invalid_request"
+  },
+  "action_clear_cache": {
+   "status": "ok",
+   "cache_entries": 0
+  },
+  "action_models": {
+   "status": "ok",
+   "local": {
+    "status": "available",
+    "models": [
+     {
+      "name": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+      "digest": "cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a",
+      "format": "unknown"
+     }
+    ]
+   }
+  },
+  "action_pull_model": {
+   "status": "pulling",
+   "model": "some/model:tag"
+  },
+  "action_pull_model_missing": {
+   "status": "unavailable",
+   "error_code": "invalid_model_name"
+  },
+  "action_pull_status": {
+   "status": "idle"
+  },
+  "action_cancel_pull": {
+   "status": "cancelled",
+   "model": "some/model:tag"
+  },
+  "action_test_connection": {
+   "status": "unavailable",
+   "error_code": "ollama_missing"
+  },
+  "action_status": {
+   "status": "ready",
+   "backend": "local",
+   "local": {
+    "status": "unavailable",
+    "error_code": "ollama_missing"
+   },
+   "selected_model": {
+    "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+    "status": "accepted",
+    "eligible": true,
+    "thinking": false,
+    "source": "HauhauCS Qwen3.5-2B Uncensored Aggressive；作者声明uncensored，未证明中文选词专项微调。",
+    "quality": "固定中文提示词与300字上文独立筛选：105/120，首选102/120，纠正3、改错0；人工试用待完成。",
+    "digest": "cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a",
+    "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+    "validation": {
+     "candidate_pages_sha256": "6db2d2d8332486775cc4d5a581010ff81f43391e7258ef5361c9bab36b85f71e",
+     "raw_inference_sha256": "2e2e1c2a5598a3219b6a16e79b023730b5f59bae89d39ae15b3680000562ad78",
+     "total": 120,
+     "hits": 105,
+     "baseline_hits": 102,
+     "wins": 3,
+     "losses": 0,
+     "human_review": "pending",
+     "scope": "independent repository-document screening; not general-use acceptance"
+    }
+   },
+   "cache_entries": 0,
+   "last_inference": {
+    "status": "selected",
+    "backend": "local",
+    "provider": "ollama",
+    "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+    "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+    "cache_hit": true,
+    "calibrated": false,
+    "eligible": true,
+    "adopted": true,
+    "has_duration_ms": true
+   }
+  },
+  "action_unknown": {
+   "status": "unavailable",
+   "error_code": "invalid_request"
+  },
+  "action_not_object": {
+   "status": "unavailable",
+   "error_code": "invalid_request"
+  },
+  "predict_router_cache_miss": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "choice": "2",
+   "requested_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": false,
+   "calibrated": false,
+   "validated": true,
+   "eligible": true,
+   "human_review": "pending"
+  },
+  "predict_router_cache_entries": 1,
+  "submit_pending": {
+   "status": "pending"
+  },
+  "submit_completion": {
+   "status": "ok",
+   "backend": "local",
+   "provider": "ollama",
+   "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "choice": "2",
+   "requested_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+   "model_identity": "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201",
+   "cache_hit": true,
+   "calibrated": false,
+   "validated": true,
+   "eligible": true,
+   "human_review": "pending"
+  },
+  "submit_disabled": {
+   "status": "unavailable",
+   "backend": "local",
+   "error_code": "disabled"
+  },
+  "submit_bad_payload": {
+   "status": "unavailable",
+   "error_code": "invalid_candidates"
+  },
+  "submit_busy": {
+   "status": "unavailable",
+   "error_code": "prediction_busy"
+  }
+ },
+ "runtime": {
+  "scenarios": [
+   {
+    "name": "immediate_ok",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+     "payload": {
+      "status": "ok",
+      "eligible": true
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+     "payload": {
+      "status": "ok",
+      "eligible": true
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "immediate_missing_status",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "6b152ef26b77813babafe601dbb1c155",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "6b152ef26b77813babafe601dbb1c155",
+     "payload": {
+      "note": "no status"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unknown",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "6b152ef26b77813babafe601dbb1c155",
+     "payload": {
+      "note": "no status"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unknown",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "immediate_invalid_error_code",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "7b913280c22f73f100e211be6391851c",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "7b913280c22f73f100e211be6391851c",
+     "payload": {
+      "status": "unavailable",
+      "error_code": 1.5
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_error_code"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unavailable",
+      "duration_ms": "number",
+      "error_code": "invalid_error_code"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "7b913280c22f73f100e211be6391851c",
+     "payload": {
+      "status": "unavailable",
+      "error_code": 1.5
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_error_code"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unavailable",
+      "duration_ms": "number",
+      "error_code": "invalid_error_code"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "immediate_bool_error_code",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "08085d0637f4d1391090c469fb06dfe2",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "08085d0637f4d1391090c469fb06dfe2",
+     "payload": {
+      "status": "unavailable",
+      "error_code": true
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_error_code"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unavailable",
+      "duration_ms": "number",
+      "error_code": "invalid_error_code"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "08085d0637f4d1391090c469fb06dfe2",
+     "payload": {
+      "status": "unavailable",
+      "error_code": true
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_error_code"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "unavailable",
+      "duration_ms": "number",
+      "error_code": "invalid_error_code"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "immediate_non_dict",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "809359d89707ccdffbdb4ee2e1249651",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "809359d89707ccdffbdb4ee2e1249651",
+     "payload": {
+      "status": "error",
+      "error_code": "invalid_handler_result"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_handler_result"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "error",
+      "duration_ms": "number",
+      "error_code": "invalid_handler_result"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "809359d89707ccdffbdb4ee2e1249651",
+     "payload": {
+      "status": "error",
+      "error_code": "invalid_handler_result"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "invalid_handler_result"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "error",
+      "duration_ms": "number",
+      "error_code": "invalid_handler_result"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "handler_failed",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "00208b6fd5e4de5283092cd1744bb053",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "00208b6fd5e4de5283092cd1744bb053",
+     "payload": {
+      "status": "error",
+      "error_code": "handler_failed"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "handler_failed"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "error",
+      "duration_ms": "number",
+      "error_code": "handler_failed"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "00208b6fd5e4de5283092cd1744bb053",
+     "payload": {
+      "status": "error",
+      "error_code": "handler_failed"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float",
+     "error_code": "handler_failed"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "error",
+      "duration_ms": "number",
+      "error_code": "handler_failed"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "deferred_ok",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": {
+      "status": "ok",
+      "eligible": true
+     },
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+     "payload": {
+      "status": "pending"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+     "payload": {
+      "status": "ok",
+      "eligible": true
+     }
+    },
+    "notices": [
+     {
+      "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+      "seq": 1
+     }
+    ],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "deferred_ineligible",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": {
+      "status": "ok",
+      "eligible": false
+     },
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+     "payload": {
+      "status": "pending"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+     "payload": {
+      "status": "ok",
+      "eligible": false
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "deferred_settings_changed",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": {
+      "enabled": true,
+      "slot": 8
+     },
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": {
+      "status": "ok",
+      "eligible": true
+     },
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+     "payload": {
+      "status": "pending"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+     "payload": {
+      "status": "unavailable",
+      "error_code": "settings_changed"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "deferred_unresolved",
+    "input": {
+     "settings_mapping": {
+      "enabled": true
+     },
+     "raw_settings": null,
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+     "payload": {
+      "status": "pending"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+     "payload": {
+      "status": "pending"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "pending",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 1
+   },
+   {
+    "name": "predict_reloads_settings",
+    "input": {
+     "settings_mapping": {
+      "enabled": true,
+      "slot": 5
+     },
+     "raw_settings": null,
+     "rewrite_before": {
+      "enabled": true,
+      "slot": 7
+     },
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 7,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "settings_kind_keeps_cached",
+    "input": {
+     "settings_mapping": {
+      "enabled": true,
+      "slot": 5
+     },
+     "raw_settings": null,
+     "rewrite_before": {
+      "enabled": true,
+      "slot": 7
+     },
+     "rewrite_after": null,
+     "kind": "settings",
+     "payload": {
+      "action": "status"
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "settings",
+      "seq": 1,
+      "settings": {
+       "enabled": true,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "9b509596801084b5534b0417999b1c0d",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "9b509596801084b5534b0417999b1c0d",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "9b509596801084b5534b0417999b1c0d",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   },
+   {
+    "name": "broken_settings_disables",
+    "input": {
+     "settings_mapping": null,
+     "raw_settings": "{not json",
+     "rewrite_before": null,
+     "rewrite_after": null,
+     "kind": "predict",
+     "payload": {
+      "state": {
+       "task": "中文输入法候选选择",
+       "preceding_text": "我们今天去看",
+       "pinyin": "dianying"
+      },
+      "candidates": [
+       "电影",
+       "电源",
+       "电涌",
+       "电阻",
+       "电工"
+      ],
+      "candidate_fields": [
+       {
+        "preedit": "dianying",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianyin",
+        "start": 4,
+        "end": 11
+       },
+       {
+        "preedit": "dianyong",
+        "start": 4,
+        "end": 12
+       },
+       {
+        "preedit": "dianzu",
+        "start": 4,
+        "end": 10
+       },
+       {
+        "preedit": "diangong",
+        "start": 4,
+        "end": 11
+       }
+      ]
+     },
+     "resolve": null,
+     "idle_seconds": 60.0
+    },
+    "state_after_start": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "handled": 1,
+    "calls": [
+     {
+      "kind": "predict",
+      "seq": 1,
+      "settings": {
+       "enabled": false,
+       "backend": "local",
+       "provider": null,
+       "local_model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+       "slot": 5,
+       "local_wait_ms": 150,
+       "thresholds": {},
+       "log_mode": "metadata"
+      }
+     }
+    ],
+    "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+    "response_after_pump": {
+     "seq": 1,
+     "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "state_after_pump": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_pump": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "response_after_resolve": {
+     "seq": 1,
+     "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+     "payload": {
+      "status": "ok"
+     }
+    },
+    "notices": [],
+    "state_after_resolve": {
+     "state": "ready",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "log_after_resolve": [
+     {
+      "ts": "iso",
+      "event": "request",
+      "status": "ok",
+      "duration_ms": "number"
+     }
+    ],
+    "deferred_pending": 0
+   }
+  ],
+  "loops": [
+   {
+    "name": "run_exit_when_idle",
+    "input": {
+     "publish": false,
+     "kind": "health",
+     "payload": {},
+     "idle_seconds": 0.2
+    },
+    "dispatch_calls": 0,
+    "closed": true,
+    "state": {
+     "state": "stopped",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "response": null
+   },
+   {
+    "name": "run_handles_then_exits",
+    "input": {
+     "publish": true,
+     "kind": "health",
+     "payload": {},
+     "idle_seconds": 0.2
+    },
+    "dispatch_calls": 1,
+    "closed": true,
+    "state": {
+     "state": "stopped",
+     "pid": 16464,
+     "updated_at": "float"
+    },
+    "response": {
+     "seq": 1,
+     "request_id": "66cc51977c1152c92399f04628de9313",
+     "payload": {
+      "status": "ok"
+     }
+    }
+   }
+  ],
+  "construction": [
+   {
+    "name": "broken_settings_at_construction",
+    "raised": "JSONDecodeError"
+   }
+  ]
+ }
+}
