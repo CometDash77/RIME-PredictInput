@@ -1,0 +1,19 @@
+# Local history / migration material (never published)
+reference/
+.scratch/
+
+# Node / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.vite/
+
+# Python (legacy baseline helpers)
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
