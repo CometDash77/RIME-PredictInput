@@ -66,6 +66,12 @@ Ollama 模型在**已有候选页**里挑一个更符合上文的候选，Lua �
   绝不进诊断日志或完成通知载荷，云端请求载荷仅存内存。
 - **设置页会话（session）**：`http://127.0.0.1:48371/#<token>`，令牌 900 秒 TTL、
   最多 16 个会话、只绑回环、Host/Origin 都必须等于回环地址。
+- **更新检查（update check）**：伴随进程对 GitHub releases API 的匿名 GET。出站只有
+  固定 URL + 静态产品 UA，无 body、不跟随重定向；比较只认 stable（draft/prerelease/
+  非 semver tag 不参与，跳转链接限 github.com）；传输拒绝/非 200/坏 JSON/无 stable
+  一律折叠成 `unavailable` 完全静默；会话内节流（默认 1 小时一次）。产出只有 tag 与
+  跳转链接，供设置页展示（展示面随设置页批次落地），绝不自动下载或安装；
+  `update_check_enabled` 默认开（omit-if-default 反向：只在关闭时写出）。
 - **诊断日志（`diagnostics.log`）**：`metadata` 模式只记事件名、状态、耗时、错误码，
   **绝不记正文、拼音、候选或模型回答**。
 

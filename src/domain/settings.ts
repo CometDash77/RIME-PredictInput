@@ -54,6 +54,8 @@ export interface Settings {
   readonly localBaseUrl: string;
   readonly cloudEnabled: boolean;
   readonly cloud: CloudChannel | null;
+  /** 更新检查开关（spec #10）：默认开，关闭才写线格式。 */
+  readonly updateCheckEnabled: boolean;
   readonly slot: number;
   readonly localWaitMs: number;
   readonly thresholds: Readonly<Record<string, number>>;
@@ -68,6 +70,7 @@ export const DEFAULT_SETTINGS: Settings = {
   localBaseUrl: DEFAULT_LOCAL_BASE_URL,
   cloudEnabled: false,
   cloud: null,
+  updateCheckEnabled: true,
   slot: DEFAULT_SLOT,
   localWaitMs: DEFAULT_LOCAL_WAIT_MS,
   thresholds: {},
@@ -87,6 +90,7 @@ export const SETTINGS_WIRE_KEYS = [
   "local_base_url",
   "cloud_enabled",
   "cloud",
+  "update_check_enabled",
 ] as const;
 
 export type CloudChannelWire = {
@@ -110,6 +114,8 @@ export type SettingsWire = {
   readonly local_base_url?: string;
   readonly cloud_enabled?: boolean;
   readonly cloud?: CloudChannelWire;
+  /** 默认开（omit-if-default 反向）：只在用户关闭时写出。 */
+  readonly update_check_enabled?: boolean;
 }
 
 function cloudToWire(cloud: CloudChannel): CloudChannelWire {
@@ -129,6 +135,7 @@ export function toWire(settings: Settings): SettingsWire {
     ...(settings.localBaseUrl === DEFAULT_LOCAL_BASE_URL ? {} : { local_base_url: settings.localBaseUrl }),
     ...(settings.cloudEnabled ? { cloud_enabled: true } : {}),
     ...(settings.cloud === null ? {} : { cloud: cloudToWire(settings.cloud) }),
+    ...(settings.updateCheckEnabled ? {} : { update_check_enabled: false }),
   };
 }
 
@@ -201,6 +208,7 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
   const localBaseUrl = raw["local_base_url"] ?? DEFAULT_LOCAL_BASE_URL;
   const cloudEnabled = raw["cloud_enabled"] ?? false;
   const cloud = raw["cloud"] ?? null;
+  const updateCheckEnabled = raw["update_check_enabled"] ?? true;
 
   if (typeof enabled !== "boolean") return settingsError("enabled must be a boolean");
   if (backend !== "local" || provider !== null) return settingsError("local_only");
@@ -276,6 +284,9 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
     cloudChannel = { kind: kind as CloudKind, model: model.trim(), apiKey, baseUrl: cloudEndpoint };
   }
 
+  // ---- 更新检查开关（spec #10：默认开） ----
+  if (typeof updateCheckEnabled !== "boolean") return settingsError("update_check_enabled must be a boolean");
+
   return ok({
     enabled,
     backend: "local",
@@ -284,6 +295,7 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
     localBaseUrl: localEndpoint,
     cloudEnabled,
     cloud: cloudChannel,
+    updateCheckEnabled,
     slot,
     localWaitMs,
     thresholds: safeThresholds,
@@ -315,6 +327,7 @@ export function settingsEqual(left: Settings, right: Settings): boolean {
     left.localModel !== right.localModel ||
     left.localBaseUrl !== right.localBaseUrl ||
     left.cloudEnabled !== right.cloudEnabled ||
+    left.updateCheckEnabled !== right.updateCheckEnabled ||
     left.slot !== right.slot ||
     left.localWaitMs !== right.localWaitMs ||
     left.logMode !== right.logMode

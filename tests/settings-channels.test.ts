@@ -190,6 +190,41 @@ describe("cloud_enabled 开关", () => {
   });
 });
 
+describe("更新检查开关（spec #10：默认开，omit-if-default 反向）", () => {
+  it("缺字段 = 默认开，线格式不写出该键", () => {
+    const settings = load(settingsFromMapping({}));
+    expect(settings.updateCheckEnabled).toBe(true);
+    expect("update_check_enabled" in toWire(settings)).toBe(false);
+  });
+
+  it("显式 true 等价于缺字段", () => {
+    const settings = load(settingsFromMapping({ update_check_enabled: true }));
+    expect(settings.updateCheckEnabled).toBe(true);
+    expect("update_check_enabled" in toWire(settings)).toBe(false);
+  });
+
+  it("关闭时写出到线格式末位", () => {
+    const settings = load(settingsFromMapping({ update_check_enabled: false }));
+    expect(settings.updateCheckEnabled).toBe(false);
+    const wire = toWire(settings);
+    expect(wire.update_check_enabled).toBe(false);
+    expect(Object.keys(wire).at(-1)).toBe("update_check_enabled");
+  });
+
+  it("非布尔拒绝", () => {
+    expect(codeOf(settingsFromMapping({ update_check_enabled: "no" }))).toBe(
+      "update_check_enabled must be a boolean",
+    );
+  });
+
+  it("settingsEqual 覆盖该开关", () => {
+    const base = load(settingsFromMapping({}));
+    const off = load(settingsFromMapping({ update_check_enabled: false }));
+    expect(settingsEqual(base, off)).toBe(false);
+    expect(settingsEqual(off, off)).toBe(true);
+  });
+});
+
 describe("settingsEqual 覆盖通道字段", () => {
   const base = load(settingsFromMapping({}));
   const cloudA = load(settingsFromMapping({ cloud_enabled: true, cloud: cloudMapping }));

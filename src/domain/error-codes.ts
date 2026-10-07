@@ -28,6 +28,7 @@ export type SettingsErrorCode =
   | "secrets are not supported in local settings"
   | "settings file is too large"
   | "cloud_enabled must be a boolean"
+  | "update_check_enabled must be a boolean"
   | "local_base_url must be a valid http(s) URL"
   | "cloud must be an object with kind, model, api_key and base_url"
   | "cloud kind must be openai-responses, openai-chat, anthropic or custom"
