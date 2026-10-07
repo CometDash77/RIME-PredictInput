@@ -23,3 +23,7 @@
   发送端不需要再改调用方。
 - 后续实现方式二选一：编译一个小原生助手（沿用旧 `rime_model_predict_launcher.c` 的
   `FindWindowW`+`SendMessageTimeoutW` 逻辑），或改由 Lua 侧在收到响应后自行触发刷新。
+- 2026-10-07 履行注记（spec #10 第一硬点）：端口已由 koffi 发送端补全
+  （`src/runtime/weasel-messenger-koffi.ts`，依赖 `koffi@2.16.3`）。找窗走
+  EnumWindows 枚举式，载荷 UTF-8 + 终止 NUL（cbData 计入 NUL，fork 侧契约）。
+  koffi 不可用或非 Windows 时仍走 `unsupportedCompletionNotifier` 降级路径。

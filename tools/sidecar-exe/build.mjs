@@ -38,13 +38,15 @@ if (!existsSync(distMain)) fail("dist/cli/main.js missing — run `pnpm build` f
 const sg = run(process.execPath, [path.join(here, "strip-guard.mjs")], { stdio: "inherit" });
 if (sg.status !== 0) fail("strip-guard failed");
 
-// 2. self-contained CJS bundle (zod inlined; no external requires left).
+// 2. CJS bundle (zod inlined; koffi kept external so @yao-pkg/pkg follows the
+//    require and packs the native .node, the #9 probe-proven path).
 await esbuild.build({
   entryPoints: [path.join(here, "exe-entry.mjs")],
   bundle: true,
   platform: "node",
   format: "cjs",
   target: "node22",
+  external: ["koffi"],
   outfile: bundle,
   sourcemap: false,
   logLevel: "info",

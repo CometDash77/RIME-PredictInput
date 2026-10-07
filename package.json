@@ -25,6 +25,7 @@
     "build:exe": "pnpm run build && node tools/sidecar-exe/build.mjs"
   },
   "dependencies": {
+    "koffi": "2.16.3",
     "zod": "^4.6.5"
   },
   "devDependencies": {
