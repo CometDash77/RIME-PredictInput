@@ -18,11 +18,13 @@ import type { SettingsActionReply } from "../src/inference/actions.js";
 import type { HealthReport } from "../src/inference/health.js";
 import type { JsonObject } from "../src/json/guards.js";
 import type { SettingsStoreError } from "../src/settings/store.js";
+import type { UpdateCheckOutcome } from "../src/providers/update.js";
 import {
   SettingsWebHost,
   type SettingsWebInference,
   type SettingsWebRuntime,
   type SettingsWebStore,
+  type SettingsWebUpdates,
 } from "../src/web/settings-host.js";
 import { safeError, safeMetadata } from "../src/web/safe-metadata.js";
 import { toJsonObject } from "./support/json.js";
@@ -325,5 +327,149 @@ describe("response filtering", () => {
   it("only passes whitelisted error strings through", () => {
     expect(safeError("slot must be a positive integer")).toBe("slot must be a positive integer");
     expect(safeError("settings file is too large")).toBe("invalid_request");
+  });
+});
+
+describe("update check wiring and cloud channel", () => {
+  const TOKEN2 = "s".repeat(43);
+  const TOKEN3 = "w".repeat(43);
+  const UPDATE_URL = "https://github.com/CometDash77/RIME-PredictInput/releases/tag/v0.2.0";
+
+  class FakeUpdates implements SettingsWebUpdates {
+    calls = 0;
+    outcome: UpdateCheckOutcome = { kind: "up-to-date" };
+    fails = false;
+    async maybeCheck(): Promise<UpdateCheckOutcome> {
+      this.calls += 1;
+      if (this.fails) throw new Error("transport exploded");
+      return this.outcome;
+    }
+  }
+
+  let updates: FakeUpdates;
+  let runtime2: FakeRuntime;
+  let host2: SettingsWebHost;
+  let base2: string;
+
+  const request2 = async (
+    path: string,
+    options: { readonly method?: string; readonly token?: string; readonly body?: unknown } = {},
+  ): Promise<{ readonly status: number; readonly body: unknown }> => {
+    const response = await fetch(base2 + path, {
+      method: options.method ?? "GET",
+      headers: {
+        ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(options.token === undefined ? {} : { Authorization: `Bearer ${options.token}` }),
+      },
+      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+    });
+    return { status: response.status, body: (await response.json()) as unknown };
+  };
+
+  beforeAll(async () => {
+    updates = new FakeUpdates();
+    runtime2 = new FakeRuntime();
+    host2 = new SettingsWebHost({
+      inference: new FakeInference(),
+      runtime: runtime2,
+      updates,
+      port: 0,
+      pageUrl: pathToFileURL(pagePath),
+    });
+    await host2.start();
+    base2 = `http://127.0.0.1:${host2.port}`;
+    for (const token of [TOKEN2, TOKEN3]) {
+      const registered = await fetch(base2 + "/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      expect(registered.status).toBe(200);
+    }
+  });
+
+  afterAll(async () => {
+    await host2.stop();
+  });
+
+  it("surfaces the update outcome in the settings view", async () => {
+    updates.outcome = { kind: "update-available", latest: { tag: "v0.2.0", url: UPDATE_URL } };
+    const response = await request2("/api/settings", { token: TOKEN2 });
+    expect(response.status).toBe(200);
+    expect(toJsonObject(toJsonObject(response.body)["update"] ?? {})).toEqual({
+      kind: "update-available",
+      tag: "v0.2.0",
+      url: UPDATE_URL,
+    });
+    expect(updates.calls).toBe(1);
+    // 触发接线在 host：每次会话读取都询问；节流归 UpdateChecker 自己（已有专项测试）。
+    await request2("/api/settings", { token: TOKEN2 });
+    expect(updates.calls).toBe(2);
+  });
+
+  it("does not check when update_check_enabled is off", async () => {
+    const disabled = { ...DEFAULT_SETTINGS, updateCheckEnabled: false };
+    runtime2.reload = ok(disabled);
+    runtime2.settings = disabled;
+    const before = updates.calls;
+    const response = await request2("/api/settings", { token: TOKEN2 });
+    expect(toJsonObject(response.body)["update"]).toBeUndefined();
+    expect(updates.calls).toBe(before);
+    runtime2.reload = ok(DEFAULT_SETTINGS);
+    runtime2.settings = DEFAULT_SETTINGS;
+  });
+
+  it("stays silent when the outcome is unavailable", async () => {
+    updates.outcome = { kind: "unavailable" };
+    const response = await request2("/api/settings", { token: TOKEN2 });
+    expect(toJsonObject(response.body)["update"]).toBeUndefined();
+  });
+
+  it("folds checker failures into silence", async () => {
+    updates.fails = true;
+    try {
+      const response = await request2("/api/settings", { token: TOKEN2 });
+      expect(toJsonObject(response.body)["update"]).toBeUndefined();
+    } finally {
+      updates.fails = false;
+    }
+  });
+
+  it("omits update when no checker is wired", async () => {
+    const registered = await fetch(base + "/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: TOKEN3 }),
+    });
+    expect(registered.status).toBe(200);
+    const response = await call("/api/settings", { token: TOKEN3 });
+    expect(toJsonObject(response.body)["update"]).toBeUndefined();
+  });
+
+  it("saves a cloud channel through the store", async () => {
+    const response = await request2("/api/settings", {
+      method: "POST",
+      token: TOKEN2,
+      body: {
+        enabled: true,
+        backend: "local",
+        provider: null,
+        local_model: DEFAULT_MODEL,
+        slot: 5,
+        local_wait_ms: 150,
+        thresholds: {},
+        log_mode: "metadata",
+        cloud_enabled: true,
+        cloud: { kind: "anthropic", model: "claude-sonnet-4", api_key: "sk-test", base_url: null },
+      },
+    });
+    expect({ status: response.status, body: response.body }).toEqual({ status: 200, body: { status: "ok" } });
+    expect(runtime2.store.saved?.cloudEnabled).toBe(true);
+    expect(runtime2.store.saved?.cloud).toEqual({
+      kind: "anthropic",
+      model: "claude-sonnet-4",
+      apiKey: "sk-test",
+      baseUrl: null,
+    });
   });
 });

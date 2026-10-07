@@ -11,8 +11,11 @@ import { pathToFileURL } from "node:url";
 
 import { InferenceService } from "../inference/service.js";
 import { appPathsForUser } from "../ipc/app-paths.js";
+import { FetchTransport } from "../providers/http.js";
 import { LocalBackend } from "../providers/ollama.js";
 import { CloudBackend } from "../providers/cloud.js";
+import { SIDECAR_VERSION, UpdateChecker } from "../providers/update.js";
+import { monotonicSeconds } from "../runtime/clock.js";
 import { messengerCompletionNotifier } from "../runtime/completion-notify.js";
 import { SingleInstance, SIDECAR_LOCK_FILE } from "../runtime/lifecycle.js";
 import { SidecarRuntime } from "../runtime/runtime.js";
@@ -104,6 +107,13 @@ export async function runSidecar(args: CliArgs): Promise<number> {
     settingsWeb = new SettingsWebHost({
       inference: service,
       runtime: host,
+      // 更新检查（spec #10）：只在设置页会话读取时出站（进程内节流），
+      // sidecar 冷启动与普通输入零网络；开关关闭时 host 完全不询问。
+      updates: new UpdateChecker({
+        transport: new FetchTransport(),
+        now: monotonicSeconds,
+        currentVersion: SIDECAR_VERSION,
+      }),
       initialToken: args.source === "settings" ? args.token : null,
     });
     try {

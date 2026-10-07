@@ -48,7 +48,9 @@ Ollama 模型在**已有候选页**里挑一个更符合上文的候选，Lua �
   `http://127.0.0.1:11434`，走冻结的 `/api/chat` 字节与已验收身份）或任意 OpenAI 兼容
   baseURL（走 `/chat/completions`，契约验收身份）；云端 = OpenAI Responses /
   OpenAI Chat Completions / Anthropic Messages / 自定义（OpenAI 兼容 wire + 自由端点）。
-  传输按端点自动切换，不进设置线格式；云端显式 opt-in 默认关（YG 拍板 ③A）。
+  传输按端点自动切换，不进设置线格式；云端显式 opt-in 默认关（YG 拍板 ③A），
+  设置页开启处明示披露：开启后正文（上文）、拼音与候选列表发往所配服务商，
+  任何通道不持久记录这些内容。
 - **槽位（slot）**：插入位置，默认 5。
 - **停手延迟（`local_wait_ms`）**：用户停手多久后才真的预测，默认 150，上限 200 ms。
 - **伴随进程（sidecar）**：按需启动、默认 60 秒空闲自动退出的常驻进程；由锁文件保证单实例。
@@ -69,8 +71,10 @@ Ollama 模型在**已有候选页**里挑一个更符合上文的候选，Lua �
 - **更新检查（update check）**：伴随进程对 GitHub releases API 的匿名 GET。出站只有
   固定 URL + 静态产品 UA，无 body、不跟随重定向；比较只认 stable（draft/prerelease/
   非 semver tag 不参与，跳转链接限 github.com）；传输拒绝/非 200/坏 JSON/无 stable
-  一律折叠成 `unavailable` 完全静默；会话内节流（默认 1 小时一次）。产出只有 tag 与
-  跳转链接，供设置页展示（展示面随设置页批次落地），绝不自动下载或安装；
+  一律折叠成 `unavailable` 完全静默；会话内节流（默认 1 小时一次）。触发点是
+  **设置页会话读取**：只有打开设置页才可能出站，sidecar 冷启动与普通输入零网络；
+  开关关闭时连询问都不发生。设置页展示面 = 发现新版本时呈现 tag 与发布页跳转链接，
+  其余（最新/失败/关闭）一律静默；绝不自动下载或安装。
   `update_check_enabled` 默认开（omit-if-default 反向：只在关闭时写出）。
 - **安装计划（install plan）**：安装/升级/卸载/还原的纯函数决策面——输入环境
   快照（自有文件摘要、TSF 注册状态、共享模型路径）与随包目标清单（路径表
