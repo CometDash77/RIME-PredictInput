@@ -1,4 +1,5 @@
 import type { DispatchErrorCode } from "../domain/error-codes.js";
+import type { CloudKind } from "../domain/settings.js";
 import type { JsonObject } from "../json/guards.js";
 
 /**
@@ -8,10 +9,14 @@ import type { JsonObject } from "../json/guards.js";
  * 模型候选，其余一律留空。把它们写成判别联合，是为了让「成功但没有资格」这种旧实现
  * 里真实存在过的状态无法被表达出来。
  */
+/** 预测结果的通道维度：本地（Ollama 原生 / OpenAI 兼容端点）或云端四形态。 */
+export type PredictionBackend = "local" | "cloud";
+export type PredictionProvider = "ollama" | "local-compat" | CloudKind;
+
 export interface PredictionOk {
   readonly kind: "ok";
-  readonly backend: "local";
-  readonly provider: "ollama";
+  readonly backend: PredictionBackend;
+  readonly provider: PredictionProvider;
   readonly model: string;
   readonly choice: string;
   readonly requestedModel: string;
@@ -33,7 +38,7 @@ export interface PredictionOk {
 export interface PredictionUnavailable {
   readonly kind: "unavailable";
   readonly errorCode: DispatchErrorCode;
-  readonly backend?: "local";
+  readonly backend?: PredictionBackend;
   readonly modelIdentity?: string;
   readonly ineligible?: true;
 }
@@ -54,6 +59,10 @@ export function failedOutcome(errorCode: DispatchErrorCode): PredictionOutcome {
 
 export function failedLocalOutcome(errorCode: DispatchErrorCode): PredictionOutcome {
   return { kind: "unavailable", errorCode, backend: "local" };
+}
+
+export function failedCloudOutcome(errorCode: DispatchErrorCode): PredictionOutcome {
+  return { kind: "unavailable", errorCode, backend: "cloud" };
 }
 
 /** 字段顺序与 `providers.infer` / `_apply_validation` 的插入顺序一致。 */

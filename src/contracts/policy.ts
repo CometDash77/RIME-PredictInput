@@ -11,6 +11,7 @@ import type { JsonObject } from "../json/guards.js";
 import { policyDigest, sha256Hex } from "../json/digest.js";
 import { MAX_CONTEXT_CHARS } from "../domain/context.js";
 import type { DecisionInput } from "../domain/decision.js";
+import type { CloudKind } from "../domain/settings.js";
 import { err, ok, type Result } from "../domain/result.js";
 
 /** 模型身份的唯一来源在 domain/model.ts；这里只转发给契约层的调用方。 */
@@ -42,6 +43,33 @@ export const POLICY_SPEC: JsonValue = {
 export const POLICY_DIGEST = policyDigest(POLICY_SPEC);
 export const VALIDATED_POLICY_DIGEST = "d51e0f3e4e79af9cac5b4f2e5db041aa1d651bcbe2ae8143abd3e9527e37f1c4";
 export const VALIDATED_IDENTITY = "ollama:bc6f4e75678f8eea860c311ffafb892dbaed9ff97915ae4907e8ddb6618c5201";
+
+/**
+ * 契约验收集（YG 拍板 ①A，spec #10 双通道）：
+ * 除 Ollama 冻结组合外，凡身份前缀属于此集合的通道，其适配器在请求/响应两侧
+ * 强制与本地完全相同的决策契约（strict JSON、choice 为 1..N 整数、越界即拒），
+ * 身份即视为已验收。前缀与身份函数一一对应，伪造前缀拿不到正确摘要形状。
+ */
+export type ContractChannelKind = "local-compat" | CloudKind;
+
+export const CONTRACT_VALIDATED_PREFIXES: readonly string[] = [
+  "local-compat",
+  "openai-responses",
+  "openai-chat",
+  "anthropic",
+  "custom",
+];
+
+/** 契约验收身份 = 通道 + 端点 + 模型 + 冻结策略的联合摘要。凭据不参与（换 key 不作废缓存）。 */
+export function cloudIdentityFor(kind: ContractChannelKind, endpoint: string, model: string): string {
+  return `${kind}:${sha256Hex(`${kind}\u0000${endpoint}\u0000${model}\u0000${POLICY_DIGEST}`)}`;
+}
+
+/** 跨通道一致的资格判定：ollama 前缀走冻结组合校验，其余前缀属于契约验收集。 */
+export function isEligibleIdentity(identity: string): boolean {
+  if (identity.startsWith("ollama:")) return isValidatedIdentity(identity);
+  return CONTRACT_VALIDATED_PREFIXES.some((prefix) => identity.startsWith(`${prefix}:`));
+}
 
 /** 写成 type 而不是 interface：结构化的证据要能直接作为 JSON 值出现在状态里。 */
 export type ValidationEvidence = {
@@ -116,17 +144,11 @@ export interface ChatRequestBody {
 export type ChatRequestError = "candidate_fields_missing";
 
 /**
- * 构造一次候选选择请求。
- *
- * 候选字段缺失时拒绝发送：没有 preedit/start/end 就无法约束 choice 的取值范围，
- * 而模型只能被允许在既有候选里挑一个。
+ * 决策查询的线上形态：本地与全部云端通道共用同一份字节——
+ * 「决策输入跨通道一致」在请求侧的体现。
  */
-export function chatRequestBody(
-  decision: DecisionInput,
-  model: string,
-): Result<ChatRequestBody, ChatRequestError> {
-  if (decision.candidateFields.length === 0) return err("candidate_fields_missing");
-  const query = {
+export function decisionQuery(decision: DecisionInput): JsonValue {
+  return {
     preceding_text: decision.state.precedingText,
     pinyin: decision.state.pinyin,
     candidates: decision.candidates.map((text, index) => {
@@ -140,6 +162,20 @@ export function chatRequestBody(
       };
     }),
   };
+}
+
+/**
+ * 构造一次候选选择请求。
+ *
+ * 候选字段缺失时拒绝发送：没有 preedit/start/end 就无法约束 choice 的取值范围，
+ * 而模型只能被允许在既有候选里挑一个。
+ */
+export function chatRequestBody(
+  decision: DecisionInput,
+  model: string,
+): Result<ChatRequestBody, ChatRequestError> {
+  if (decision.candidateFields.length === 0) return err("candidate_fields_missing");
+  const query = decisionQuery(decision);
   return ok({
     model,
     stream: false,

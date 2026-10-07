@@ -24,7 +24,11 @@ import {
   LoadedItemSchema,
   ManifestSchema,
 } from "../contracts/ollama-wire.js";
-import { chatRequestBody, chatRequestWire, identityFor } from "../contracts/policy.js";
+import { chatRequestBody, chatRequestWire, cloudIdentityFor, identityFor } from "../contracts/policy.js";
+import {
+  chatCompletionsRequest,
+  parseChatCompletionsAnswer,
+} from "../contracts/cloud-wire.js";
 import type { DecisionInput } from "../domain/decision.js";
 import type { LocalBackendErrorCode } from "../domain/error-codes.js";
 import { sha256Hex } from "../json/digest.js";
@@ -32,14 +36,15 @@ import { compact } from "../json/canonical.js";
 import type { JsonObject } from "../json/guards.js";
 import { parseStrictObject } from "../json/strict.js";
 import { err, ok, type Result } from "../domain/result.js";
-import type { Settings } from "../domain/settings.js";
+import { DEFAULT_LOCAL_BASE_URL, type Settings } from "../domain/settings.js";
 import type { ChildHandle, ChildSpawner } from "../runtime/child-process.js";
 import { spawnHidden } from "../runtime/child-process.js";
 import { monotonicSeconds, sleepSeconds } from "../runtime/clock.js";
 import { OwnedChildProcess } from "../runtime/lifecycle.js";
 import { FetchTransport, decodeJsonBody, safeHttpError, type HttpTransportLike } from "./http.js";
 
-export const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+/** 本地通道缺省端点；常量的事实来源在 domain/settings（设置校验与传输选择共用）。 */
+export const OLLAMA_BASE_URL = DEFAULT_LOCAL_BASE_URL;
 export const OLLAMA_KEEP_ALIVE = "60s";
 
 /** 拉取动作只接受一个保守的模型名字符集（与旧实现同一正则）。 */
@@ -62,7 +67,7 @@ export interface ResolvedModel {
 }
 
 export type ConnectionStatus =
-  | { readonly status: "connected"; readonly provider: "local"; readonly version: string }
+  | { readonly status: "connected"; readonly provider: "local" | "cloud"; readonly version: string }
   | { readonly status: "unavailable"; readonly errorCode: LocalBackendErrorCode };
 
 export type PullStatus =
@@ -76,7 +81,7 @@ export type LocalInferenceOutcome =
   | {
       readonly kind: "ok";
       readonly backend: "local";
-      readonly provider: "ollama";
+      readonly provider: "ollama" | "local-compat";
       readonly model: string;
       readonly choice: string;
       readonly requestedModel: string;
@@ -309,6 +314,10 @@ export class LocalBackend {
     settings: Settings,
     options: { readonly modelIdentity?: string } = {},
   ): Promise<LocalInferenceOutcome> {
+    // 端点被改写 → OpenAI Chat 兼容传输（YG 拍板 ③A）；缺省端点保持冻结的原生路径。
+    if (settings.localBaseUrl !== DEFAULT_LOCAL_BASE_URL) {
+      return await this.#compatInfer(decision, settings, options);
+    }
     let identity = options.modelIdentity;
     if (identity === undefined) {
       const resolved = await this.resolveModel(settings.localModel);
@@ -365,6 +374,54 @@ export class LocalBackend {
         provider: "ollama",
         model: settings.localModel,
         choice: String(choice),
+        requestedModel: settings.localModel,
+        modelIdentity: identity,
+      };
+    } catch {
+      return { kind: "unavailable", errorCode: "invalid_model_response" };
+    }
+  }
+
+  /**
+   * 本地 OpenAI 兼容端点（LM Studio / vLLM / 自建网关……）。
+   *
+   * 与 Ollama 原生路径的差异：无 /api/ps 归属核对、无 keep_alive、无摘要复核
+   * （兼容端点没有 digest 概念）；身份 = local-compat 前缀的契约验收摘要。
+   * 答案契约与原生路径完全一致（strict JSON、1..N、越界即拒）。
+   */
+  async #compatInfer(
+    decision: DecisionInput,
+    settings: Settings,
+    options: { readonly modelIdentity?: string },
+  ): Promise<LocalInferenceOutcome> {
+    const identity = options.modelIdentity ?? cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel);
+    const prepared = chatCompletionsRequest({
+      endpoint: settings.localBaseUrl,
+      model: settings.localModel,
+      apiKey: "",
+      decision,
+      strictFormat: false,
+    });
+    try {
+      const response = await this.#transport.request("POST", prepared.url, {
+        headers: prepared.headers,
+        body: Buffer.from(compact(prepared.body), "utf8"),
+        timeoutSeconds: this.#inferenceTimeout,
+      });
+      if (!response.ok) return { kind: "unavailable", errorCode: response.error };
+      if (response.value.status !== 200) {
+        return { kind: "unavailable", errorCode: safeHttpError(response.value.status) };
+      }
+      const decoded = decodeJsonBody(response.value.body);
+      if (!decoded.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
+      const answer = parseChatCompletionsAnswer(decoded.value, decision.candidates.length);
+      if (!answer.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
+      return {
+        kind: "ok",
+        backend: "local",
+        provider: "local-compat",
+        model: settings.localModel,
+        choice: answer.value,
         requestedModel: settings.localModel,
         modelIdentity: identity,
       };

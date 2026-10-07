@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url";
 import { InferenceService } from "../inference/service.js";
 import { appPathsForUser } from "../ipc/app-paths.js";
 import { LocalBackend } from "../providers/ollama.js";
+import { CloudBackend } from "../providers/cloud.js";
 import { messengerCompletionNotifier } from "../runtime/completion-notify.js";
 import { SingleInstance, SIDECAR_LOCK_FILE } from "../runtime/lifecycle.js";
 import { SidecarRuntime } from "../runtime/runtime.js";
@@ -87,7 +88,8 @@ export async function runSidecar(args: CliArgs): Promise<number> {
   let runtime: SidecarRuntime | null = null;
   let settingsWeb: SettingsWebHost | null = null;
   try {
-    const service = new InferenceService({ local: new LocalBackend() });
+    // 双通道推理端口（spec #10）：本地 Ollama/兼容端点 + 云端四形态，同一决策契约。
+    const service = new InferenceService({ local: new LocalBackend(), cloud: new CloudBackend() });
     inference = service;
     // 完成通知（ADR 0001）：Windows + koffi 就绪时恢复旧行为（预测落盘即刻刷新
     // 候选窗），否则保持「等下一次按键」的降级表现。

@@ -37,8 +37,18 @@ Ollama 模型在**已有候选页**里挑一个更符合上文的候选，Lua �
   `num_predict 32`、`num_ctx 2048`，`think: false`）。
 - **已验证身份（validated identity）**：`POLICY_DIGEST === VALIDATED_POLICY_DIGEST` 且
   `identity === VALIDATED_IDENTITY`。只有已验证身份的结果才可能被标为可用。
+- **契约验收集（contract-validated prefixes）**：本地兼容端点与云端四通道的适配器在
+  请求/响应两侧强制与本地完全相同的决策契约（strict JSON、choice 1..N、越界即拒），
+  其身份（`<前缀>:<sha256>`，前缀 ∈ local-compat / openai-responses / openai-chat /
+  anthropic / custom）视为已验收（spec #10 决策 09，YG 拍板 ①A）。
 - **可用（eligible）**：结果可以交给 Lua 插入第 5 位的前提 = 发布成功 + `status === "ok"` +
-  `eligible === true`。完成通知也以它为前提。
+  `eligible === true`；判定跨通道一致——ollama 前缀走冻结组合校验，其余前缀属于
+  契约验收集。完成通知也以它为前提。
+- **通道（channel）**：决策请求的接入形态。本地 = Ollama 原生端点（缺省
+  `http://127.0.0.1:11434`，走冻结的 `/api/chat` 字节与已验收身份）或任意 OpenAI 兼容
+  baseURL（走 `/chat/completions`，契约验收身份）；云端 = OpenAI Responses /
+  OpenAI Chat Completions / Anthropic Messages / 自定义（OpenAI 兼容 wire + 自由端点）。
+  传输按端点自动切换，不进设置线格式；云端显式 opt-in 默认关（YG 拍板 ③A）。
 - **槽位（slot）**：插入位置，默认 5。
 - **停手延迟（`local_wait_ms`）**：用户停手多久后才真的预测，默认 150，上限 200 ms。
 - **伴随进程（sidecar）**：按需启动、默认 60 秒空闲自动退出的常驻进程；由锁文件保证单实例。
@@ -49,7 +59,11 @@ Ollama 模型在**已有候选页**里挑一个更符合上文的候选，Lua �
   载荷是 `"<engine_id>\n<request_id>\n<seq>"`，**不含任何正文或候选文本**。
 - **设置（settings）**：`%USERPROFILE%\.rime-model-predict\settings.json`。文件里是
   snake_case 线格式（`local_model`、`local_wait_ms`、`log_mode`…），域模型里是
-  camelCase；`provider` 恒为 `null`，旧 Cloud 偏好会被忽略并退回默认设置。
+  camelCase；`backend`/`provider` 冻结为 `"local"`/`null`（旧 Cloud 偏好仍被忽略并退回
+  默认设置），通道选择由 `local_base_url`/`cloud_enabled`/`cloud` 表达，且一律
+  **omit-if-default**——旧设置文件读入再写回字节不变。云端凭据只存 `cloud.api_key`
+  槽位（设置文件中唯一豁免凭据扫描的字段；其余任何位置的凭据键名照旧拒绝），
+  绝不进诊断日志或完成通知载荷，云端请求载荷仅存内存。
 - **设置页会话（session）**：`http://127.0.0.1:48371/#<token>`，令牌 900 秒 TTL、
   最多 16 个会话、只绑回环、Host/Origin 都必须等于回环地址。
 - **诊断日志（`diagnostics.log`）**：`metadata` 模式只记事件名、状态、耗时、错误码，

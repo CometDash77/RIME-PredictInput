@@ -18,3 +18,9 @@ export type LocalBackendPort = Pick<
   | "cancelModelPull"
   | "close"
 >;
+
+/**
+ * 云端通道端口（spec #10 双通道）：与本地端口承担同一推理语义的云端半边。
+ * `resolveIdentity` 是纯计算（通道+端点+模型+冻结策略的联合摘要），不需要网络。
+ */
+export type { CloudChannelPort } from "../providers/cloud.js";
