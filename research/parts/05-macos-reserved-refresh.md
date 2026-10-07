@@ -234,6 +234,7 @@ spctl -a -vv "$appDir"
 
 - **存活边界**：`_` 前缀键只在一处被擦除——`Context::ClearTransientOptions()`（context.cc:313-325），其唯一调用点是 `ApplySchema`（engine.cc:289），即**仅切换输入方案时**擦除；`Context::Clear()`（engine.cc:288，每次上屏/清空输入）不碰 `properties_`；无其他擦除点。
 - **通知语义**：`set_property` 每调用必发通知（context.cc:300-303 无条件），不存在「值相同则不发」。
+- **空串例外**：`set_property("_refresh_ui", "")` **不触发**——`ReservedPropertyValue.parse` 对空串 `throw .emptyInput`（Squirrel @ 0cd71a61 · sources/ReservedProperty.swift:25），`handleReservedProperty` :297 `try parse` 随之抛出；refreshUI 分支（:303-304）不消费解析出的 value，故除空串外**任意非空值都触发**。也不能借空串实现「只清保留注释不刷新」。
 - **前端只消费载荷**：Squirrel master 用消息串里的 key/value，不回读 Context（引文见 Q1/Q2）。
 - **可操作结论**：想要刷新，在任意时刻调用一次 `Context:set_property("_refresh_ui", "1")` 即可——不需要为「保活」而每轮重设（每次调用本身就触发一次刷新）；属性是否存活对触发无影响。真正要留意的是反向依赖：若 Lua 组件把 `_` 前缀属性当跨调用状态存储，切换 schema 会把它擦掉——跨 schema 状态请用非 `_` 前缀属性（不进前端协议、不会被 ClearTransientOptions 擦除）或 Lua 侧自持状态；`_` 前缀命名空间保留给前端协议使用。
 
@@ -263,4 +264,15 @@ spctl -a -vv "$appDir"
 | U-macOS-5 | 「ObjC runtime 遍历定位 IMKInputController 实例并取 client」从 librime 插件侧实施的可能性 | 未验证、脆弱；本票禁实测 |
 | U-macOS-6 | librime CI `make test/install` 内部的 CMake 配置标志（`BUILD_MERGED_PLUGINS` 终值）未逐行核 | 由产物布局（独立 rime-plugins dylib）与 Squirrel 消费链反证为 OFF；静态可核，未核 |
 | U-macOS-7 | `IMKTextInput.attributedSubstring(from:)` 当前官方文档 URL（多 slug 实抓 404）与「输入法专用签名/公证要求」独立官方页 | 未定位；API 归属为公开事实但引用页未验证 |
-| U-macOS-8 | Nightly（2026-08-13 prerelease）对应的确切 master 基线 commit 未核（按 CI 惯例自 master 构建，故含 2026-06-22 的 #1143；未逐 commit 实证） | 静态可核，未核 |
+| U-macOS-8 | Nightly（2026-08-13 prerelease）对应的确切 master 基线 commit | **已实证（补遗#3）**：release-ci.yml:58-59 nightly 仅在 `refs/heads/master` 触发；compare `e9723977…0cd71a61` ahead_by=11 / behind_by=0 → merge commit 是 master tip 祖先，含 #1143 |
+---
+
+## 补遗：重复研究员回报的增量发现（2026-10-06 复核并入）
+
+本票研究期间有两位并行研究员；第二位（重派）的完整版本晚于本报告入库并覆盖了工作树。两版本核心判定一致；其增量发现经主理人逐条第一方实抓复核（下述引文均为复核时实抓，非转述），并入如下。其原版全文存档于 `.scratch/1f34ad3f-worktree-versions/`（gitignored，不入库）。
+
+1. **空串值是唯一「写了也不触发」的形态**（已并入判定②）：Squirrel @ 0cd71a61 · sources/ReservedProperty.swift:24-25 —— `static func parse(_ raw: String) throws(ReservedPropertyError)` 首行 `guard !raw.isEmpty else { throw .emptyInput }`；SquirrelInputController.swift:297 `try ReservedPropertyValue.parse(rawValue)` 使异常传播出 handler → 不刷新。操作约束：`set_property("_refresh_ui", …)` 的 value 必须**非空**。
+2. **`Context::Clear` 不动 `properties_` 的原文锚**（补判定②存活边界的证据强度）：上游 @ 33e7814 · src/rime/context.cc:106-111 —— 只清 `input_`/`caret_pos_`/`composition_`（:110 `update_notifier_(this)`，非 property 通知通道）。「`_` 属性全清」语义完全来自 `ClearTransientOptions`（:313-325；:315-319 清 `options_`、:320-324 清 `properties_`，各自自 `lower_bound("_")` 起 erase；日志行 :317 `cleared opption` 拼写为原文实录）。
+3. **Nightly 构建自 master 实证**（U-macOS-8 收窄，见未知项表）：Squirrel @ 0cd71a61 · .github/workflows/release-ci.yml:58-59 `if: ${{ github.repository == 'rime/squirrel' && github.ref == 'refs/heads/master' }}`、:65 `title: "Nightly build"`；gh api compare `e9723977efc7456f…0cd71a61` → `{status: "ahead", ahead_by: 11, behind_by: 0}` → #1143 的 merge commit 是 master tip（Nightly 构建源）的祖先。
+4. **插件 loader 编入 librime.1.dylib**（补 Q3/Q4 运行期发现机制）：上游 @ 33e7814 · CMakeLists.txt:24 `option(BUILD_SEPARATE_LIBS "Build separate rime-* libraries" OFF)` → `current_module_path()`（plugins/plugins_module.cc:115-119，`dladdr(&rime_require_module_plugins)`）解析到主 dylib 自身路径 → 插件目录 = **librime.1.dylib 所在目录** + `rime-plugins`（CMakeLists.txt:34）→ 官方 app 的 `Contents/Frameworks/rime-plugins/` 无需任何配置即被自动发现。
+5. **新增 U-macOS-9**：`set_property` 无同值去重（判定②）+ 前端无幂等短路（handleReservedProperty :294-306 无值比较）→ **每次调用都触发一次完整重绘**（rimeUpdate → panel.update）；Lua 侧高频/循环调用的性能影响未实测。
