@@ -5,6 +5,7 @@ reference/
 # Node / TypeScript
 node_modules/
 dist/
+build/
 *.tsbuildinfo
 coverage/
 .vite/

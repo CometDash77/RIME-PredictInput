@@ -7,6 +7,7 @@
 | 伴随进程 | `dist/cli/main.js`（默认 `--source lua`） | 正常路径：请求泵 + 空闲退出 + 可选设置页 |
 | 设置入口 | `dist/cli/main.js settings` | 拉起/复用设置服务并把浏览器指向 `/#<token>`，返回码 0/2/3/4/5 |
 | 自检 | `dist/cli/main.js selftest` | 7 项离线边界检查，临时目录里跑，不碰真实用户目录 |
+| 随包产物 | `build/exe/rime-predict-sidecar.exe`（`pnpm build:exe`） | 单文件形态（@yao-pkg/pkg）：预测泵 + selftest；无 settings 入口（CJS `import.meta.url` 限制，ADR 0003） |
 | 设置页资产 | `assets/settings.html` | `__NONCE__` 在响应时替换 |
 
 ## 分层与数据流
@@ -85,6 +86,7 @@ pnpm install
 pnpm verify          # tsc --noEmit ×2 + vitest（210 条）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
+pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
 pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
 ```
 

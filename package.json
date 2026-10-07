@@ -21,13 +21,16 @@
     "test:watch": "vitest",
     "fixtures": "python tools/oracle/dump_fixtures.py",
     "selftest": "node dist/cli/main.js selftest",
-    "verify": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit && vitest run"
+    "verify": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit && vitest run",
+    "build:exe": "pnpm run build && node tools/sidecar-exe/build.mjs"
   },
   "dependencies": {
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
+    "@yao-pkg/pkg": "^6.23.0",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   }
