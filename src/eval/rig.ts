@@ -135,11 +135,13 @@ export class HttpTransport implements Transport {
     const started = Date.now();
     const body = {
       model: arm.model,
+      stream: false,
+      // Qwen3.5 系默认开思考：与产品决策路径及 Q5 白名单一致，评测请求必须显式关闭。
+      think: false,
       messages: [
         { role: "system", content: arm.system },
         { role: "user", content: renderUserContent(sample, arm) },
       ],
-      stream: false,
       options: { ...SAMPLING_OPTIONS, ...(arm.options ?? {}) },
     };
     try {

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   FixtureTransport,
+  HttpTransport,
   extractOutput,
   judgeVerdict,
   scoreSample,
@@ -148,5 +149,47 @@ describe("FixtureTransport", () => {
     expect(err).toEqual({ kind: "failure", code: "timeout", latencyMs: expect.any(Number) });
     const missing = await transport.call(generationSample({ id: "s3" }), ARM);
     expect(missing).toEqual({ kind: "failure", code: "fixture_missing", latencyMs: 0 });
+  });
+});
+
+describe("HttpTransport", () => {
+  it("请求体显式 think:false 且合并冻结采样参数；响应经 ChatResponseSchema 校验", async () => {
+    const { createServer } = await import("node:http");
+    const bodies: unknown[] = [];
+    const server = createServer((request, response) => {
+      let raw = "";
+      request.on("data", (chunk: Buffer) => {
+        raw += chunk.toString("utf8");
+      });
+      request.on("end", () => {
+        bodies.push(JSON.parse(raw) as unknown);
+        response.setHeader("content-type", "application/json");
+        response.end(
+          JSON.stringify({ model: "m", done: true, done_reason: "stop", message: { role: "assistant", content: "拟好" } }),
+        );
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (address === null || typeof address === "string") throw new Error("no listen port");
+    const transport: Transport = new HttpTransport();
+    try {
+      const outcome = await transport.call(generationSample(), {
+        ...ARM,
+        transport: { kind: "http", endpoint: `http://127.0.0.1:${address.port}` },
+      });
+      expect(outcome).toEqual({ kind: "ok", content: "拟好", latencyMs: expect.any(Number) });
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+    const body = bodies[0] as Record<string, unknown>;
+    expect(body["think"]).toBe(false);
+    expect(body["stream"]).toBe(false);
+    expect(body["model"]).toBe("fixture-model");
+    expect(body["options"]).toEqual({ temperature: 0, seed: 19, num_predict: 32, num_ctx: 2048 });
+    const messages = body["messages"] as { role: string; content: string }[];
+    expect(messages[0]?.role).toBe("system");
+    expect(messages[0]?.content).toBe("test");
+    expect(messages[1]?.content).toBe("上文：前文\n拼音：nihao");
   });
 });

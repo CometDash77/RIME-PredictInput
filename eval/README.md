@@ -61,3 +61,38 @@ run 的退出码：`0` 达标 / `1` 不达标 / `2` 三次结论不一致（无�
 - #13 的真实模型实验：写一个 `transport: {kind:"http", endpoint}` 的 arm 配置（本地兼容 /api/chat），直接复用本 rig；模型 × 提示/解码策略 = 一份 arm 配置。
 - #6 冻结门槛后替换 `threshold.json` 并置 `frozen: true`；在那之前的所有 rig 结论都是 draft。
 - 变更留出集内容（增删样本、改目标）必须走 `eval:build` 重建并重新冻结哈希；直接手改 samples.jsonl 会被 `eval:check` 拒绝。
+
+## 真实模型臂（issue #13）
+
+`arms/` 下每份 JSON = 一个「模型 × 提示/解码策略」候选，`transport` 为 `{kind:"http", endpoint}`，指向私有 Ollama（127.0.0.1:21434，wf27 已验证的隔离模式：用户 11434 全程不触碰）。
+
+**臂文案口径**：wf26 四臂的原文不在本工作区（`reference/` 为空），故按 `research/generation-quality-baseline.md` §2.2 的结构定义**在本票重新冻结**：`lean-v2`（精简 system + 上文/待转换拼音/合法音节切分投影）、`examples-v2`（lean + 4 组冻结 few-shot）、`coverage-v2`（examples + 汉字范围/合法音节数 format pattern）。与历史文案不保证逐字同源；few-shot 示例目标（汽水/遗迹/持之以恒/猫语屋）均不在留出集 target 集内，上文亦无交集，防泄漏由构造满足。臂配置加 `.gitattributes -text` 保字节稳定。
+
+**模型身份**（冻结 digest；每次运行前用 `/api/tags` 核对，漂移即拒绝结论）：
+
+| 模型 | digest | 角色 |
+|---|---|---|
+| `hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M` | `cd456f14…` | 现固定模型 |
+| `hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M` | `6811ecb8…` | 容量下限 |
+| `qwen3.5:2b`（2.7GB Q8_0） | 官方库 | 同基座对照；**待 #6 Q12 用户点头后由维护者手工 pull**，未 pull 时驱动脚本自动跳过这 3 份臂 |
+
+- 已证否不重跑：4B（wf27：examples/coverage 零收益 + 热延迟 1.6–1.8×）；9B 驻留判定手册见下。
+- 采样全部冻结为 `temperature=0, seed=19, num_predict=32, num_ctx=2048`（rig SAMPLING_OPTIONS，臂内显式重申）；`think:false` 由 rig 传输层强制（Qwen3.5 系默认开思考，与产品决策路径及 Q5 白名单一致）。
+
+### 在维护者机器上运行（目标档：RTX 5060 8GB + 已装权重，零下载）
+
+```powershell
+pnpm build                                          # 依赖已装时；否则先 pnpm install
+powershell -NoProfile -ExecutionPolicy Bypass -File eval\scripts\start-private-ollama.ps1   # 私有 21434；OLLAMA_MODELS 指向用户模型库；KEEP_ALIVE=60s；核对 digest 输出
+powershell -NoProfile -ExecutionPolicy Bypass -File eval\scripts\run-matrix.ps1             # 全部在场模型 × 3 臂 × 3 次复跑；缺席模型自动跳过
+powershell -NoProfile -ExecutionPolicy Bypass -File eval\scripts\stop-private-ollama.ps1    # 停私有实例并证明无残留、11434 未被触碰
+```
+
+> 脚本按 Windows PowerShell 5.1 兼容编写并通过实测（UTF-8 读取、native stderr 容错、按端口回收证明）；pwsh 7 同样可用。管线验证记录：mock /api/tags + /api/chat 下 6 臂 × 3 次复跑全链路通过，缺席模型正确 SKIP，报告 JSON 与矩阵摘要落盘正常。
+
+报告 JSON 落 `eval/.cache/reports/run-*.json`，矩阵摘要落 `matrix-*.txt`；`eval:run` 退出码 0 达标 / 1 不达标 / 2 三次不一致 / 3 基建错误。`threshold.json` 冻结前（`frozen:false`）所有结论一律 draft。
+
+### 延迟口径与 9B 驻留判定
+
+- rig 的 `cold/warm p50/p90` 是**推理请求口径**（HTTP 往返；run 1 首例含模型加载），不是「停手 → 第 5 位可选」端到端口径（后者归 #6 Q9 与实际窗口验收）。CPU 机器上跑出的延迟不得当目标档数据使用（Q3：延迟门槛只对 GPU ≥8GB 档冻结）。
+- **9B 驻留判定**（`qwen3.5:9b`，6.6GB Q4_K_M，待维护者 pull）在目标机执行：pull 后以 `num_ctx 2048` 发起一次请求，随后查 `ollama ps` 的 `size_vram`——`size_vram == size` 即全 GPU 驻留（判定通过）；`size_vram < size` 即发生 CPU 回退（判定不驻留），同时记录加载时长与首个请求延迟。算术边界：8151 MiB 总显存 − 桌面占用约 0.6–1.0 GB − CUDA 上下文开销 ≈ 7.0–7.5 GB 可用，对 6.6 GB 权重属**边缘档**，实测即判定。
