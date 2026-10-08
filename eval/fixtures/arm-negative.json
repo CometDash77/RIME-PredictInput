@@ -1,0 +1,10 @@
+{
+  "model": "eval-fixture",
+  "response_kind": "raw",
+  "system": "你是中文输入法选词器（评测 fixture）。",
+  "user_template": "上文：{context}\n待转换拼音：{pinyin}\n只输出该拼音对应的词语。",
+  "transport": {
+    "kind": "fixture",
+    "file": "eval/fixtures/fixtures-negative-responses.json"
+  }
+}

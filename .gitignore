@@ -2,6 +2,9 @@
 reference/
 .scratch/
 
+# Eval assets (cache & reports are runtime artifacts; holdout/ is tracked)
+eval/.cache/
+
 # Node / TypeScript
 node_modules/
 dist/

@@ -1,0 +1,8 @@
+{
+  "frozen": false,
+  "min_outside_hit_rate": 0.6,
+  "min_hit_rate": 0.6,
+  "max_blank_rate": 0.3,
+  "max_error_rate": 0.1,
+  "_note": "草案阈值：仅用于验证 rig 机制与二值判定通路。正式数值由 #6（交付门槛）冻结后替换并把 frozen 置 true；frozen=false 时 rig 结论一律标记为 draft。"
+}
