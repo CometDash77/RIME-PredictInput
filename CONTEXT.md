@@ -58,6 +58,11 @@ Windows 上 Weasel/RIME 用户的**按需模型预测插件**：用户输入拼�
 - **文件 IPC**：`requests/` 放 `req-<engine>-<seq 20 位>-<request_id>.json`；
   `responses/<engine_id>/` 放 `response-a|b.json` + 同名 `.ready` 标记
   （标记含 `bytes` 与 `sha256`，槽位按 `seq` 奇偶轮换）。**IPC 是权威通道**。
+- **瞬态运行时文件（transient runtime files）**：sidecar 在用户目录产生的非配置文件——
+  `ipc/requests/`、`ipc/responses/<engine_id>/`、`status.json`、`sidecar.lock`；
+  消费即删、启动时清 60 秒前的残骸、卸载终局全清，请求与响应文件含正文/拼音与
+  模型回答，属隐私敏感载荷。`settings.json` 与 `diagnostics.log` 不属此类：
+  前者卸载保留，后者卸载删除。
 - **完成通知（completion notice）**：告诉 Weasel 候选窗可以立即刷新，不必等下一次按键；
   载荷是 `"<engine_id>\n<request_id>\n<seq>"`，**不含任何正文或候选文本**。
 - **设置（settings）**：`%USERPROFILE%\.rime-model-predict\settings.json`。文件里是
@@ -66,7 +71,8 @@ Windows 上 Weasel/RIME 用户的**按需模型预测插件**：用户输入拼�
   默认设置），通道选择由 `local_base_url`/`cloud_enabled`/`cloud` 表达，且一律
   **omit-if-default**——旧设置文件读入再写回字节不变。云端凭据只存 `cloud.api_key`
   槽位（设置文件中唯一豁免凭据扫描的字段；其余任何位置的凭据键名照旧拒绝），
-  绝不进诊断日志或完成通知载荷，云端请求载荷仅存内存。
+  绝不进诊断日志或完成通知载荷，云端请求载荷仅存内存。卸载保留设置文件：
+  重装即恢复原配置；手动全清 = 删除整个用户目录。
 - **设置页会话（session）**：`http://127.0.0.1:48371/#<token>`，令牌 900 秒 TTL、
   最多 16 个会话、只绑回环、Host/Origin 都必须等于回环地址。
 - **更新检查（update check）**：伴随进程对 GitHub releases API 的匿名 GET。出站只有
@@ -81,7 +87,11 @@ Windows 上 Weasel/RIME 用户的**按需模型预测插件**：用户输入拼�
   快照（自有文件摘要、TSF 注册状态、共享模型路径）与随包目标清单（路径表
   注入，契约不编造路径），输出操作清单（写/删/注册/还原指引）与保留清单；
   执行器只是薄壳。幂等重装 = 空增量或等价操作；中断自愈 = 缺的补写、遗留
-  清掉；共享模型只进保留清单，绝不进操作清单。
+  清掉；共享模型只进保留清单，绝不进操作清单。卸载固定序：反注册 TSF →
+  按 `status.json` 的 pid 加进程映像校验终止 sidecar（校验不过提示手动退出重试）→
+  删自有程序文件与明确接入项（Lua 滤镜、custom 补丁条目）→ 删瞬态运行时文件与
+  诊断日志 → 还原指引；卸载幂等 = 重跑即跳过已消失文件。升级零触碰用户目录，
+  瞬态卫生由 sidecar 启动清理兜底；旧版位置迁移成功后清理、失败不动。
 - **诊断日志（`diagnostics.log`）**：`metadata` 模式只记事件名、状态、耗时、错误码，
   **绝不记正文、拼音、候选或模型回答**。
 
