@@ -2,14 +2,17 @@
  * 三次一致复跑 rig：同一冻结留出集上跑三遍，逐例判分，按冻结阈值出
  * 「达标 / 不达标」二值判定；三次结论一致才算成立，否则判无结论。
  *
- * 判分语义与既有基线一致（research/generation-quality-baseline.md）：
- *   hit      生成词与目标精确相等
- *   wrong    通过校验但与目标不等
- *   blank    输出未通过白名单校验（CJK / 长度 / 读音音节）→ 安全留空
- *   unsup    协议层拒绝（拼音不可整切或非纯小写字母），不发请求
- *   error    传输或响应形状失败（HTTP 失败、非 JSON、形状不符）
- * 门槛按 schema 分别计算（候选外命中率 / 命中率 / 留空率 / 错误率），
- * 两个 schema 全部满足才判达标。
+ * 判分语义（#6 冻结口径，2026-10-08：模型只在词库内选择，不许造词）：
+ *   hit        生成词与目标精确相等（词库成员校验通过后才有机会）
+ *   wrong      通过全部校验（含词库成员）但与目标不等
+ *   blank      模型未给出可用词库词：空输出，或合法读音但词库无此词（造词）→ 安全留空
+ *   mechanical 机制错误（硬 0）：非 CJK / 拼音残留 / 超长 / 读音不符 / 复读上文
+ *   unsup      协议层拒绝（拼音不可整切或非纯小写字母），或词库不支持该输入
+ *              （主 schema 完整候选集合为空 → 正确行为 = 静默）；不计入留空率
+ *   error      传输或响应形状失败（HTTP 失败、非 JSON、形状不符）
+ * 门槛按 schema 分别计算（词库内深位命中率 / 命中率 / 留空率 / 机制错误率 /
+ * 错误率），两个 schema 全部满足才判达标。词库成员校验按主 schema（manifest
+ * schemas 首个）的冻结词库执行，口径同 manifest 的完整候选集合定义。
  */
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
@@ -23,7 +26,7 @@ import { isPlainPinyin, isSegmentable, readingMatches, segmentations } from "./s
 import { buildLexicon, type Lexicon } from "./dicts.js";
 import { checkFrozen } from "./build-holdout.js";
 
-export type SampleCategory = "hit" | "wrong" | "blank" | "unsup" | "error";
+export type SampleCategory = "hit" | "wrong" | "blank" | "mechanical" | "unsup" | "error";
 
 export interface FrozenSample {
   readonly id: string;
@@ -234,9 +237,13 @@ export function extractOutput(content: string, arm: ArmConfig): string | null {
   }
 }
 
-export function scoreSample(sample: FrozenSample, outcome: TransportOutcome, arm: ArmConfig, readings: ReadonlyMap<string, ReadonlySet<string>>): SampleOutcome {
+export function scoreSample(sample: FrozenSample, outcome: TransportOutcome, arm: ArmConfig, lexicon: Lexicon): SampleOutcome {
   if (sample.kind === "boundary" || !isPlainPinyin(sample.pinyin) || !isSegmentable(sample.pinyin)) {
     return { id: sample.id, category: "unsup", output: "", latencyMs: 0 };
+  }
+  // 词库不支持该输入（完整候选集合为空）：正确行为 = 静默，不构成模型质量额度。
+  if ((lexicon.byConcat.get(sample.pinyin) ?? []).length === 0) {
+    return { id: sample.id, category: "unsup", output: "", latencyMs: outcome.latencyMs };
   }
   if (outcome.kind === "failure") {
     return { id: sample.id, category: "error", output: "", latencyMs: outcome.latencyMs, failureCode: outcome.code };
@@ -246,7 +253,18 @@ export function scoreSample(sample: FrozenSample, outcome: TransportOutcome, arm
     return { id: sample.id, category: "error", output: "", latencyMs: outcome.latencyMs, failureCode: "invalid_response" };
   }
   const trimmed = text.trim();
-  if (trimmed === "" || !CJK.test(trimmed) || [...trimmed].length > MAX_OUTPUT_SCALARS || !readingMatches(trimmed, sample.pinyin, readings)) {
+  // 空输出 = 模型未给出可用答案，安全留空。
+  if (trimmed === "") {
+    return { id: sample.id, category: "blank", output: "", latencyMs: outcome.latencyMs };
+  }
+  // 机制错误（硬 0，不算质量额度）：复读上文 / 非 CJK / 超长 / 读音不符。
+  const echoed = trimmed === sample.precedingText.trim();
+  if (echoed || !CJK.test(trimmed) || [...trimmed].length > MAX_OUTPUT_SCALARS || !readingMatches(trimmed, sample.pinyin, lexicon.charReadings)) {
+    return { id: sample.id, category: "mechanical", output: trimmed, latencyMs: outcome.latencyMs };
+  }
+  // 词库成员校验：合法读音但词库无此词 = 造词，模型必须词库内选择 → 安全留空。
+  const entries = lexicon.byConcat.get(sample.pinyin) ?? [];
+  if (!entries.some((entry) => entry.text === trimmed)) {
     return { id: sample.id, category: "blank", output: "", latencyMs: outcome.latencyMs };
   }
   return {
@@ -258,10 +276,11 @@ export function scoreSample(sample: FrozenSample, outcome: TransportOutcome, arm
 }
 
 export interface SchemaMetrics {
-  readonly outsideTotal: number;
-  readonly outsideHits: number;
+  readonly beyondTotal: number;
+  readonly beyondHits: number;
   readonly hits: number;
   readonly blanks: number;
+  readonly mechanical: number;
   readonly errors: number;
 }
 
@@ -270,6 +289,7 @@ export interface RunMetrics {
   readonly total: number;
   readonly hits: number;
   readonly blanks: number;
+  readonly mechanical: number;
   readonly errors: number;
   readonly coldLatencyMs: number;
   readonly warmP50Ms: number;
@@ -288,13 +308,19 @@ export async function evaluateOnce(bundle: FrozenBundle, arm: ArmConfig, schemaN
   const outcomes: SampleOutcome[] = [];
   let firstLatency: number | null = null;
   const warm: number[] = [];
+  const primaryLexicon = bundle.lexicons[schemaNames[0] as string] as Lexicon;
   for (const sample of bundle.samples) {
     let outcome: SampleOutcome;
-    if (sample.kind === "boundary" || !isPlainPinyin(sample.pinyin) || !isSegmentable(sample.pinyin)) {
+    if (
+      sample.kind === "boundary" ||
+      !isPlainPinyin(sample.pinyin) ||
+      !isSegmentable(sample.pinyin) ||
+      (primaryLexicon.byConcat.get(sample.pinyin) ?? []).length === 0
+    ) {
       outcome = { id: sample.id, category: "unsup", output: "", latencyMs: 0 };
     } else {
       const raw = await transport.call(sample, arm);
-      outcome = scoreSample(sample, raw, arm, bundle.primaryReadings);
+      outcome = scoreSample(sample, raw, arm, primaryLexicon);
     }
     if (outcome.category !== "unsup") {
       if (firstLatency === null) firstLatency = outcome.latencyMs;
@@ -305,20 +331,21 @@ export async function evaluateOnce(bundle: FrozenBundle, arm: ArmConfig, schemaN
   }
   const perSchema: Record<string, SchemaMetrics> = {};
   for (const name of schemaNames) {
-    let outsideTotal = 0;
-    let outsideHits = 0;
+    let beyondTotal = 0;
+    let beyondHits = 0;
     for (const sample of bundle.samples) {
       const labels = sample.labels?.[name];
-      if (labels?.outside_complete === true) {
-        outsideTotal += 1;
-        if (categories[sample.id] === "hit") outsideHits += 1;
+      if (labels?.beyond_page === true) {
+        beyondTotal += 1;
+        if (categories[sample.id] === "hit") beyondHits += 1;
       }
     }
     perSchema[name] = {
-      outsideTotal,
-      outsideHits,
+      beyondTotal,
+      beyondHits,
       hits: outcomes.filter((o) => o.category === "hit").length,
-      blanks: outcomes.filter((o) => o.category === "blank" || o.category === "unsup").length,
+      blanks: outcomes.filter((o) => o.category === "blank").length,
+      mechanical: outcomes.filter((o) => o.category === "mechanical").length,
       errors: outcomes.filter((o) => o.category === "error").length,
     };
   }
@@ -327,7 +354,8 @@ export async function evaluateOnce(bundle: FrozenBundle, arm: ArmConfig, schemaN
     perSchema,
     total: outcomes.length,
     hits: outcomes.filter((o) => o.category === "hit").length,
-    blanks: outcomes.filter((o) => o.category === "blank" || o.category === "unsup").length,
+    blanks: outcomes.filter((o) => o.category === "blank").length,
+    mechanical: outcomes.filter((o) => o.category === "mechanical").length,
     errors: outcomes.filter((o) => o.category === "error").length,
     coldLatencyMs: firstLatency ?? 0,
     warmP50Ms: percentile(sortedWarm, 0.5),
@@ -340,9 +368,10 @@ export async function evaluateOnce(bundle: FrozenBundle, arm: ArmConfig, schemaN
 
 export interface ThresholdConfig {
   readonly frozen: boolean;
-  readonly min_outside_hit_rate: number;
+  readonly min_beyond_page_hit_rate: number;
   readonly min_hit_rate: number;
   readonly max_blank_rate: number;
+  readonly max_mechanical_rate: number;
   readonly max_error_rate: number;
 }
 
@@ -350,13 +379,15 @@ export type Verdict = "pass" | "fail" | "inconclusive";
 
 export function judgeVerdict(metrics: RunMetrics, threshold: ThresholdConfig): Verdict {
   for (const schemaMetrics of Object.values(metrics.perSchema)) {
-    const outsideRate = schemaMetrics.outsideTotal === 0 ? 0 : schemaMetrics.outsideHits / schemaMetrics.outsideTotal;
+    const beyondRate = schemaMetrics.beyondTotal === 0 ? 0 : schemaMetrics.beyondHits / schemaMetrics.beyondTotal;
     const hitRate = schemaMetrics.hits / metrics.total;
     const blankRate = schemaMetrics.blanks / metrics.total;
+    const mechanicalRate = schemaMetrics.mechanical / metrics.total;
     const errorRate = schemaMetrics.errors / metrics.total;
-    if (outsideRate < threshold.min_outside_hit_rate) return "fail";
+    if (beyondRate < threshold.min_beyond_page_hit_rate) return "fail";
     if (hitRate < threshold.min_hit_rate) return "fail";
     if (blankRate > threshold.max_blank_rate) return "fail";
+    if (mechanicalRate > threshold.max_mechanical_rate) return "fail";
     if (errorRate > threshold.max_error_rate) return "fail";
   }
   return "pass";
@@ -421,8 +452,8 @@ export function summarize(report: RigReport): string {
   lines.push("stable_example_fraction=" + report.stable_example_fraction.toFixed(3));
   for (const run of report.runs) {
     const parts = Object.entries(run.metrics.perSchema).map(([name, m]) => {
-      const outsideRate = m.outsideTotal === 0 ? 0 : m.outsideHits / m.outsideTotal;
-      return name + "{outside " + m.outsideHits + "/" + m.outsideTotal + "=" + outsideRate.toFixed(2) + ", hit " + m.hits + "/" + run.metrics.total + ", blank " + m.blanks + ", err " + m.errors + "}";
+      const beyondRate = m.beyondTotal === 0 ? 0 : m.beyondHits / m.beyondTotal;
+      return name + "{deep " + m.beyondHits + "/" + m.beyondTotal + "=" + beyondRate.toFixed(2) + ", hit " + m.hits + "/" + run.metrics.total + ", mech " + m.mechanical + ", blank " + m.blanks + ", err " + m.errors + "}";
     });
     lines.push("run " + parts.join(" ") + " cold=" + run.metrics.coldLatencyMs + "ms p50=" + run.metrics.warmP50Ms + "ms p90=" + run.metrics.warmP90Ms + "ms");
   }

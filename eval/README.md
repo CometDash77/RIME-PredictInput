@@ -6,7 +6,7 @@
 
 - `holdout/samples.jsonl` — 冻结留出集，102 样本/行（canonical compact JSON，逐行 sha256 记入 manifest）。
 - `holdout/manifest.json` — 冻结口径：schema 词库身份（repo/commit/逐文件 sha256）、配额计数、样本哈希清单、语料决定。
-- `holdout/threshold.json` — **草案阈值**（`frozen: false`）：仅用于验证 rig 机制；正式数值由 #6 冻结后替换并置 `frozen: true`。
+- `holdout/threshold.json` — **已冻结门槛**（`frozen: true`，#6 冻结，2026-10-08）：数值见下「门槛冻结口径」。
 - `fixtures/` — rig 自证用的确定性假传输臂（正臂全命中 → 判「达标」；负臂全垃圾 → 判「不达标」）。
 - `../src/eval/` — 切分器、词库解析、候选集合计算、构建器与 rig 的 TypeScript 源码（随 `pnpm verify` 全量测试）。
 - `.cache/`（gitignored）— 词库原文件、构建报告、rig 运行报告。
@@ -50,16 +50,26 @@ pnpm eval:run -- --arm eval/fixtures/arm-positive.json --runs 3   # 三次一致
 
 run 的退出码：`0` 达标 / `1` 不达标 / `2` 三次结论不一致（无结论）/ `3` 基建错误。`threshold.json` 的 `frozen=false` 时结论一律标注 draft。
 
-## rig 判分语义（与既有基线一致）
+## rig 判分语义（#6 冻结口径，2026-10-08）
 
-- `hit` 生成词与目标精确相等；`wrong` 过校验但不等；`blank` 未过白名单校验（CJK/长度/读音音节）→ 安全留空；`unsup` 协议层拒绝（不可整切/非纯小写字母），不发请求；`error` 传输或响应形状失败。
-- 门槛按 schema 分别计算（候选外命中率 / 命中率 / 留空率 / 错误率），**两个 schema 全部满足才判达标**。
+- `hit` 生成词与目标精确相等（先过词库成员校验）；`wrong` 过全部校验但不等；`blank` 模型未给出可用词库词：空输出，或合法读音但词库无此词（**造词 → 安全留空**）；`mechanical` 机制错误（复读上文 / 非 CJK / 拼音残留 / 超长 / 读音不符）；`unsup` 协议层拒绝（不可整切/非纯小写字母）或词库不支持该输入（主 schema 完整候选集合为空，正确行为 = 静默），不发请求；`error` 传输或响应形状失败。
+- **词库成员校验**：按主 schema（manifest schemas 首个 = rime-ice）的冻结词库执行，口径同 manifest 完整候选集合定义（concatenated code == pinyin 的词条）。
+- 门槛按 schema 分别计算，**两个 schema 全部满足才判达标**（见下节数值）。
 - 三次复跑：结论（二值判定）三次一致才成立；同时记录逐例稳定率作诊断。
+
+## 门槛冻结口径（#6，YG 2026-10-08 点头）
+
+- **词库内深位命中率 ≥60%**：目标在完整候选集合内、但位次在第 1 页之后（beyond_page）的子集上精确命中率；按 schema 分别计。口径依据：**模型只在词库内选择，绝不造词**（#6 Q11 定夺；原「候选外 ≥60%」子集据此改为词库内深位子集）。
+- **留空率 ≤25%**：blank / total，unsup 不计入（结构性拒绝不是模型质量额度）。
+- **机制错误硬 0**（`max_mechanical_rate: 0`）：出现任何 1 例即判不达标，算实现 bug 不算质量额度。
+- **错误率 ≤15%**；**全局命中率不设门槛**（min_hit_rate = 0，候选内子集只作回归断言）。
+- **延迟门槛（产品侧，不进 rig）**：按键阻断 0；热态「停手 → 第 5 位可选」median ≤400 ms / p90 ≤900 ms / max ≤1500 ms（≥30 样本）；冷态首次 ≤10 s 且期间留空不阻塞；硬截止 2 s 放弃留空；空闲 60 s 释放并实测复原。rig 报告的 cold/p50/p90 为推理请求口径延迟，供真机报告人工对账。
+- **判定纪律（放宽版，Q10 定夺）**：结论来自冻结留出集上真实模型原始输出的 rig 复跑（默认 3 次一致）；调参不设流程门槛——改动模型/策略/判分后在同一冻结留出集上重跑即可，留出集字节不得改动（`eval:check` 把关）。
 
 ## 对后续票的接口
 
 - #13 的真实模型实验：写一个 `transport: {kind:"http", endpoint}` 的 arm 配置（本地兼容 /api/chat），直接复用本 rig；模型 × 提示/解码策略 = 一份 arm 配置。
-- #6 冻结门槛后替换 `threshold.json` 并置 `frozen: true`；在那之前的所有 rig 结论都是 draft。
+- #6 门槛已冻结（`frozen: true`）：rig 结论不再是 draft；数值与依据见「门槛冻结口径」。
 - 变更留出集内容（增删样本、改目标）必须走 `eval:build` 重建并重新冻结哈希；直接手改 samples.jsonl 会被 `eval:check` 拒绝。
 
 ## 真实模型臂（issue #13）

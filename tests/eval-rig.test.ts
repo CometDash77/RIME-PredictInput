@@ -17,11 +17,14 @@ import {
   type TransportOutcome,
 } from "../src/eval/rig.js";
 import type { Transport } from "../src/eval/rig.js";
+import { buildLexicon } from "../src/eval/dicts.js";
 
-const READINGS = new Map<string, ReadonlySet<string>>([
-  ["你", new Set(["ni"])],
-  ["好", new Set(["hao"])],
-  ["拟", new Set(["ni"])],
+// 最小冻结词库：单字提供读音表，词条提供成员校验；「泥」「拟号」刻意不入库。
+const LEXICON = buildLexicon([
+  {
+    name: "test.dict.yaml",
+    content: ["...", "你\tni\t10", "好\thao\t10", "拟\tni\t10", "号\thao\t10", "拟好\tni hao\t100", "你好\tni hao\t200"].join("\n"),
+  },
 ]);
 
 const ARM: ArmConfig = {
@@ -53,10 +56,11 @@ const failureOutcome = (code: string): TransportOutcome => ({ kind: "failure", c
 
 const STRICT_THRESHOLD: ThresholdConfig = {
   frozen: false,
-  min_outside_hit_rate: 0.6,
-  min_hit_rate: 0.6,
-  max_blank_rate: 0.3,
-  max_error_rate: 0.1,
+  min_beyond_page_hit_rate: 0.6,
+  min_hit_rate: 0,
+  max_blank_rate: 0.25,
+  max_mechanical_rate: 0,
+  max_error_rate: 0.15,
 };
 
 describe("extractOutput", () => {
@@ -75,47 +79,78 @@ describe("extractOutput", () => {
 
 describe("scoreSample", () => {
   it("协议拒绝（不可整切）不发请求记 unsup", () => {
-    const outcome = scoreSample(generationSample({ kind: "boundary", pinyin: "nh" }), okOutcome("拟好"), ARM, READINGS);
+    const outcome = scoreSample(generationSample({ kind: "boundary", pinyin: "nh" }), okOutcome("拟好"), ARM, LEXICON);
     expect(outcome.category).toBe("unsup");
   });
 
   it("精确命中目标记 hit", () => {
-    const outcome = scoreSample(generationSample(), okOutcome("拟好"), ARM, READINGS);
+    const outcome = scoreSample(generationSample(), okOutcome("拟好"), ARM, LEXICON);
     expect(outcome.category).toBe("hit");
   });
 
-  it("通过校验但目标不等记 wrong", () => {
-    const outcome = scoreSample(generationSample(), okOutcome("你好"), ARM, READINGS);
+  it("词库内但目标不等记 wrong", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("你好"), ARM, LEXICON);
     expect(outcome.category).toBe("wrong");
   });
 
-  it("校验失败（读音不符）记 blank", () => {
-    const outcome = scoreSample(generationSample(), okOutcome("泥好"), ARM, READINGS);
+  it("机制错误（读音不符）记 mechanical", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("泥好"), ARM, LEXICON);
+    expect(outcome.category).toBe("mechanical");
+  });
+
+  it("机制错误（拼音残留）记 mechanical", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("nihao"), ARM, LEXICON);
+    expect(outcome.category).toBe("mechanical");
+  });
+
+  it("机制错误（复读上文）优先于命中记 mechanical", () => {
+    const outcome = scoreSample(generationSample({ precedingText: "拟好" }), okOutcome("拟好"), ARM, LEXICON);
+    expect(outcome.category).toBe("mechanical");
+  });
+
+  it("机制错误（超长）记 mechanical", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("一".repeat(13)), ARM, LEXICON);
+    expect(outcome.category).toBe("mechanical");
+  });
+
+  it("造词（合法读音但词库无此词）安全留空记 blank", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("拟号"), ARM, LEXICON);
     expect(outcome.category).toBe("blank");
   });
 
+  it("空输出安全留空记 blank", () => {
+    const outcome = scoreSample(generationSample(), okOutcome("  "), ARM, LEXICON);
+    expect(outcome.category).toBe("blank");
+  });
+
+  it("词库不支持该输入（零候选）记 unsup 不占质量额度", () => {
+    const outcome = scoreSample(generationSample({ pinyin: "zzzz" }), okOutcome("拟好"), ARM, LEXICON);
+    expect(outcome.category).toBe("unsup");
+  });
+
   it("传输失败记 error 并保留失败码", () => {
-    const outcome = scoreSample(generationSample(), failureOutcome("http_500"), ARM, READINGS);
+    const outcome = scoreSample(generationSample(), failureOutcome("http_500"), ARM, LEXICON);
     expect(outcome.category).toBe("error");
     expect(outcome.failureCode).toBe("http_500");
   });
 
   it("响应形状失败记 error", () => {
-    const outcome = scoreSample(generationSample(), okOutcome("not-json"), { ...ARM, response_kind: "json-text-field" }, READINGS);
+    const outcome = scoreSample(generationSample(), okOutcome("not-json"), { ...ARM, response_kind: "json-text-field" }, LEXICON);
     expect(outcome.category).toBe("error");
     expect(outcome.failureCode).toBe("invalid_response");
   });
 });
 
 describe("judgeVerdict", () => {
-  const metricsOf = (outsideHits: number, hits: number, blanks: number, errors: number) => ({
+  const metricsOf = (beyondHits: number, hits: number, blanks: number, mechanical: number, errors: number) => ({
     perSchema: {
-      "rime-ice": { outsideTotal: 10, outsideHits, hits, blanks, errors },
-      "rime-frost": { outsideTotal: 10, outsideHits, hits, blanks, errors },
+      "rime-ice": { beyondTotal: 10, beyondHits, hits, blanks, mechanical, errors },
+      "rime-frost": { beyondTotal: 10, beyondHits, hits, blanks, mechanical, errors },
     },
     total: 20,
     hits,
     blanks,
+    mechanical,
     errors,
     coldLatencyMs: 0,
     warmP50Ms: 0,
@@ -124,19 +159,25 @@ describe("judgeVerdict", () => {
   });
 
   it("全部阈值满足判 pass", () => {
-    expect(judgeVerdict(metricsOf(7, 14, 3, 0), STRICT_THRESHOLD)).toBe("pass");
+    expect(judgeVerdict(metricsOf(7, 14, 3, 0, 0), STRICT_THRESHOLD)).toBe("pass");
   });
 
-  it("候选外命中率不足判 fail", () => {
-    expect(judgeVerdict(metricsOf(5, 14, 3, 0), STRICT_THRESHOLD)).toBe("fail");
+  it("词库内深位命中率不足判 fail", () => {
+    expect(judgeVerdict(metricsOf(5, 14, 3, 0, 0), STRICT_THRESHOLD)).toBe("fail");
   });
 
   it("任一 schema 不满足即 fail", () => {
-    const metrics = metricsOf(7, 14, 3, 0);
-    const first = metrics.perSchema["rime-ice"] as { outsideHits: number };
-    (metrics.perSchema["rime-frost"] as { outsideHits: number }).outsideHits = 2;
-    void first;
+    const metrics = metricsOf(7, 14, 3, 0, 0);
+    (metrics.perSchema["rime-frost"] as { beyondHits: number }).beyondHits = 2;
     expect(judgeVerdict(metrics, STRICT_THRESHOLD)).toBe("fail");
+  });
+
+  it("机制错误硬 0：出现 1 例即 fail", () => {
+    expect(judgeVerdict(metricsOf(7, 14, 3, 1, 0), STRICT_THRESHOLD)).toBe("fail");
+  });
+
+  it("留空率超 25% 判 fail", () => {
+    expect(judgeVerdict(metricsOf(7, 14, 6, 0, 0), STRICT_THRESHOLD)).toBe("fail");
   });
 });
 
