@@ -1,6 +1,7 @@
 # Local history / migration material (never published)
 reference/
-.scratch/
+.scratch/*
+!.scratch/handoff/
 
 # Eval assets (cache & reports are runtime artifacts; holdout/ is tracked)
 eval/.cache/
