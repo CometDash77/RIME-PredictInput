@@ -381,6 +381,7 @@ const INFERENCE_REQUEST_ID = "1".repeat(32);
 function makeRequest(kind: string, payload: unknown): RequestEnvelope {
   const raw = JSON.stringify({
     version: 1,
+    contract_version: 1,
     engine_id: INFERENCE_ENGINE,
     seq: 1,
     request_id: INFERENCE_REQUEST_ID,

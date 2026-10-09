@@ -989,12 +989,13 @@
  "requests": [
   {
    "name": "valid_predict",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": true,
     "code": null,
     "value": {
      "version": 1,
+     "contract_version": 1,
      "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
      "seq": 1,
      "request_id": "ffffffffffffffffffffffffffffffff",
@@ -1046,12 +1047,13 @@
   },
   {
    "name": "valid_health",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"health\",\"sent_at\":1000.5,\"payload\":{}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"health\",\"sent_at\":1000.5,\"payload\":{}}",
    "result": {
     "ok": true,
     "code": null,
     "value": {
      "version": 1,
+     "contract_version": 1,
      "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
      "seq": 1,
      "request_id": "ffffffffffffffffffffffffffffffff",
@@ -1063,7 +1065,7 @@
   },
   {
    "name": "version_unsupported",
-   "raw": "{\"version\":2,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":2,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "unsupported request envelope"
@@ -1071,7 +1073,7 @@
   },
   {
    "name": "engine_id_too_long",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid engine id"
@@ -1079,7 +1081,7 @@
   },
   {
    "name": "engine_id_bad_char",
-   "raw": "{\"version\":1,\"engine_id\":\"a.b\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"a.b\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid engine id"
@@ -1087,7 +1089,7 @@
   },
   {
    "name": "seq_zero",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":0,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":0,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request sequence"
@@ -1095,7 +1097,7 @@
   },
   {
    "name": "seq_bool",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":true,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":true,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request sequence"
@@ -1103,7 +1105,7 @@
   },
   {
    "name": "seq_string",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":\"1\",\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":\"1\",\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request sequence"
@@ -1111,7 +1113,7 @@
   },
   {
    "name": "request_id_uppercase",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request id"
@@ -1119,7 +1121,7 @@
   },
   {
    "name": "request_id_short",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"fffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"fffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request id"
@@ -1127,7 +1129,7 @@
   },
   {
    "name": "kind_unknown",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"shutdown\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"shutdown\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request kind"
@@ -1135,7 +1137,7 @@
   },
   {
    "name": "sent_at_zero",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request timestamp"
@@ -1143,7 +1145,7 @@
   },
   {
    "name": "sent_at_bool",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":true,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":true,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request timestamp"
@@ -1151,7 +1153,7 @@
   },
   {
    "name": "sent_at_string",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":\"1000\",\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":\"1000\",\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request timestamp"
@@ -1159,7 +1161,7 @@
   },
   {
    "name": "payload_is_list",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":[]}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":[]}",
    "result": {
     "ok": false,
     "code": "request payload must be an object"
@@ -1167,7 +1169,7 @@
   },
   {
    "name": "payload_has_secret",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"token\":\"x\"}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"token\":\"x\"}}",
    "result": {
     "ok": false,
     "code": "secrets are not allowed in IPC"
@@ -1175,7 +1177,7 @@
   },
   {
    "name": "missing_kind",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
    "result": {
     "ok": false,
     "code": "invalid request kind"
@@ -1183,12 +1185,13 @@
   },
   {
    "name": "extra_key",
-   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]},\"extra\":1}",
+   "raw": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]},\"extra\":1}",
    "result": {
     "ok": true,
     "code": null,
     "value": {
      "version": 1,
+     "contract_version": 1,
      "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
      "seq": 1,
      "request_id": "ffffffffffffffffffffffffffffffff",
@@ -1236,6 +1239,38 @@
       ]
      }
     }
+   }
+  },
+  {
+   "name": "contract_version_unknown",
+   "raw": "{\"version\":1,\"contract_version\":2,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "unsupported request envelope"
+   }
+  },
+  {
+   "name": "contract_version_missing",
+   "raw": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "unsupported request envelope"
+   }
+  },
+  {
+   "name": "contract_version_string",
+   "raw": "{\"version\":1,\"contract_version\":\"1\",\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "unsupported request envelope"
+   }
+  },
+  {
+   "name": "contract_version_bool",
+   "raw": "{\"version\":1,\"contract_version\":true,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ffffffffffffffffffffffffffffffff\",\"kind\":\"predict\",\"sent_at\":1000.5,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+   "result": {
+    "ok": false,
+    "code": "unsupported request envelope"
    }
   }
  ],
@@ -1396,16 +1431,17 @@
   "settings_file_bytes": "{\n  \"enabled\": true,\n  \"backend\": \"local\",\n  \"provider\": null,\n  \"local_model\": \"hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M\",\n  \"slot\": 3,\n  \"local_wait_ms\": 150,\n  \"thresholds\": {},\n  \"log_mode\": \"metadata\"\n}",
   "settings_file_no_overwrite_bytes": "{\n  \"enabled\": false,\n  \"backend\": \"local\",\n  \"provider\": null,\n  \"local_model\": \"hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M\",\n  \"slot\": 5,\n  \"local_wait_ms\": 150,\n  \"thresholds\": {},\n  \"log_mode\": \"metadata\"\n}",
   "request_files": {
-   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-019c1a26fcdc37fc4ae3f325f936dadb.json": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"019c1a26fcdc37fc4ae3f325f936dadb\",\"kind\":\"predict\",\"sent_at\":1000.0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}"
+   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-ec88542e02c09f5d51ceb942b6aaf0c9.json": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ec88542e02c09f5d51ceb942b6aaf0c9\",\"kind\":\"predict\",\"sent_at\":1000.0,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}"
   },
   "request_tree": [
-   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-019c1a26fcdc37fc4ae3f325f936dadb.json"
+   "ipc\\requests\\req-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-00000000000000000001-ec88542e02c09f5d51ceb942b6aaf0c9.json"
   ],
   "request_to_mapping": {
    "version": 1,
+   "contract_version": 1,
    "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
    "seq": 1,
-   "request_id": "019c1a26fcdc37fc4ae3f325f936dadb",
+   "request_id": "ec88542e02c09f5d51ceb942b6aaf0c9",
    "kind": "predict",
    "sent_at": 1000.0,
    "payload": {
@@ -1452,8 +1488,8 @@
   },
   "publish_ok": true,
   "response_files": {
-   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.json": "{\"version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"019c1a26fcdc37fc4ae3f325f936dadb\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
-   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.ready": "{\"version\":1,\"seq\":1,\"ts\":1001.25,\"bytes\":189,\"sha256\":\"19bbc6225df965f1c465ee050a834027e04642bec635ea23fe73a54f70471150\"}"
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.json": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"seq\":1,\"request_id\":\"ec88542e02c09f5d51ceb942b6aaf0c9\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
+   "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\response-a.ready": "{\"version\":1,\"seq\":1,\"ts\":1001.25,\"bytes\":210,\"sha256\":\"cd28ea0d8962c86b31668f883843ef946d1e225caef7b603255715864d3d9ade\"}"
   },
   "response_tree": [
    "ipc\\responses\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -1462,9 +1498,10 @@
   ],
   "read_latest": {
    "version": 1,
+   "contract_version": 1,
    "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
    "seq": 1,
-   "request_id": "019c1a26fcdc37fc4ae3f325f936dadb",
+   "request_id": "ec88542e02c09f5d51ceb942b6aaf0c9",
    "created_at": 1001.25,
    "payload": {
     "status": "ok",
@@ -1482,15 +1519,16 @@
   "publish_older_refused": false,
   "publish_same_seq_other_id_refused": false,
   "latest_seq_after_refusals": 2,
-  "request_bytes_fractional": "{\"version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a9ee67d50fb00cfc42ea482e1a8fc3b3\",\"kind\":\"predict\",\"sent_at\":1000.25,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
+  "request_bytes_fractional": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a86467fc221036947c6c49212bfc44fa\",\"kind\":\"predict\",\"sent_at\":1000.25,\"payload\":{\"state\":{\"task\":\"中文输入法候选选择\",\"preceding_text\":\"我们今天去看\",\"pinyin\":\"dianying\"},\"candidates\":[\"电影\",\"电源\",\"电涌\",\"电阻\",\"电工\"],\"candidate_fields\":[{\"preedit\":\"dianying\",\"start\":4,\"end\":12},{\"preedit\":\"dianyin\",\"start\":4,\"end\":11},{\"preedit\":\"dianyong\",\"start\":4,\"end\":12},{\"preedit\":\"dianzu\",\"start\":4,\"end\":10},{\"preedit\":\"diangong\",\"start\":4,\"end\":11}]}}",
   "publish_response_fractional_ok": true,
-  "response_bytes_fractional": "{\"version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a9ee67d50fb00cfc42ea482e1a8fc3b3\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
-  "ready_bytes_fractional": "{\"version\":1,\"seq\":7,\"ts\":1001.25,\"bytes\":189,\"sha256\":\"1a72d799379e984e4ed8bb56819cdbbced734e946bfb5b3576fb3b285f01e143\"}",
+  "response_bytes_fractional": "{\"version\":1,\"contract_version\":1,\"engine_id\":\"cccccccccccccccccccccccccccccccccccccccc\",\"seq\":7,\"request_id\":\"a86467fc221036947c6c49212bfc44fa\",\"created_at\":1001.25,\"payload\":{\"status\":\"ok\",\"backend\":\"local\"}}",
+  "ready_bytes_fractional": "{\"version\":1,\"seq\":7,\"ts\":1001.25,\"bytes\":210,\"sha256\":\"96d015673636749e375ca0e3abfdeba4af7add675f38b67131bcd6322bdf12fe\"}",
   "read_latest_fractional": {
    "version": 1,
+   "contract_version": 1,
    "engine_id": "cccccccccccccccccccccccccccccccccccccccc",
    "seq": 7,
-   "request_id": "a9ee67d50fb00cfc42ea482e1a8fc3b3",
+   "request_id": "a86467fc221036947c6c49212bfc44fa",
    "created_at": 1001.25,
    "payload": {
     "status": "ok",
@@ -1950,7 +1988,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -1970,10 +2008,10 @@
       }
      }
     ],
-    "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+    "request_id": "f68293d0a28c5d0aceffba5aae78c2e1",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+     "request_id": "f68293d0a28c5d0aceffba5aae78c2e1",
      "payload": {
       "status": "ok",
       "eligible": true
@@ -1981,7 +2019,7 @@
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -1994,7 +2032,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "4db72533861cdf08f71ea3b86ba217f6",
+     "request_id": "f68293d0a28c5d0aceffba5aae78c2e1",
      "payload": {
       "status": "ok",
       "eligible": true
@@ -2003,7 +2041,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -2072,7 +2110,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2092,17 +2130,17 @@
       }
      }
     ],
-    "request_id": "6b152ef26b77813babafe601dbb1c155",
+    "request_id": "3e801eff0ba20047578f8a48c15053af",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "6b152ef26b77813babafe601dbb1c155",
+     "request_id": "3e801eff0ba20047578f8a48c15053af",
      "payload": {
       "note": "no status"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -2115,7 +2153,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "6b152ef26b77813babafe601dbb1c155",
+     "request_id": "3e801eff0ba20047578f8a48c15053af",
      "payload": {
       "note": "no status"
      }
@@ -2123,7 +2161,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -2192,7 +2230,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2212,10 +2250,10 @@
       }
      }
     ],
-    "request_id": "7b913280c22f73f100e211be6391851c",
+    "request_id": "c6e32e65bc4ccac9f1e86c72b40358e9",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "7b913280c22f73f100e211be6391851c",
+     "request_id": "c6e32e65bc4ccac9f1e86c72b40358e9",
      "payload": {
       "status": "unavailable",
       "error_code": 1.5
@@ -2223,7 +2261,7 @@
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_error_code"
     },
@@ -2238,7 +2276,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "7b913280c22f73f100e211be6391851c",
+     "request_id": "c6e32e65bc4ccac9f1e86c72b40358e9",
      "payload": {
       "status": "unavailable",
       "error_code": 1.5
@@ -2247,7 +2285,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_error_code"
     },
@@ -2318,7 +2356,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2338,10 +2376,10 @@
       }
      }
     ],
-    "request_id": "08085d0637f4d1391090c469fb06dfe2",
+    "request_id": "aceea530b0deb91879a69cf7fa0aeaac",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "08085d0637f4d1391090c469fb06dfe2",
+     "request_id": "aceea530b0deb91879a69cf7fa0aeaac",
      "payload": {
       "status": "unavailable",
       "error_code": true
@@ -2349,7 +2387,7 @@
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_error_code"
     },
@@ -2364,7 +2402,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "08085d0637f4d1391090c469fb06dfe2",
+     "request_id": "aceea530b0deb91879a69cf7fa0aeaac",
      "payload": {
       "status": "unavailable",
       "error_code": true
@@ -2373,7 +2411,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_error_code"
     },
@@ -2444,7 +2482,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2464,10 +2502,10 @@
       }
      }
     ],
-    "request_id": "809359d89707ccdffbdb4ee2e1249651",
+    "request_id": "eae391acfcbb03199efa9bdb8e94234a",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "809359d89707ccdffbdb4ee2e1249651",
+     "request_id": "eae391acfcbb03199efa9bdb8e94234a",
      "payload": {
       "status": "error",
       "error_code": "invalid_handler_result"
@@ -2475,7 +2513,7 @@
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_handler_result"
     },
@@ -2490,7 +2528,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "809359d89707ccdffbdb4ee2e1249651",
+     "request_id": "eae391acfcbb03199efa9bdb8e94234a",
      "payload": {
       "status": "error",
       "error_code": "invalid_handler_result"
@@ -2499,7 +2537,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "invalid_handler_result"
     },
@@ -2570,7 +2608,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2590,10 +2628,10 @@
       }
      }
     ],
-    "request_id": "00208b6fd5e4de5283092cd1744bb053",
+    "request_id": "c5c3a2c89712dc85b0e0d4b90395139f",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "00208b6fd5e4de5283092cd1744bb053",
+     "request_id": "c5c3a2c89712dc85b0e0d4b90395139f",
      "payload": {
       "status": "error",
       "error_code": "handler_failed"
@@ -2601,7 +2639,7 @@
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "handler_failed"
     },
@@ -2616,7 +2654,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "00208b6fd5e4de5283092cd1744bb053",
+     "request_id": "c5c3a2c89712dc85b0e0d4b90395139f",
      "payload": {
       "status": "error",
       "error_code": "handler_failed"
@@ -2625,7 +2663,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float",
      "error_code": "handler_failed"
     },
@@ -2699,7 +2737,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2719,17 +2757,17 @@
       }
      }
     ],
-    "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+    "request_id": "33488ce2d3dde41d7765cee9ed7e7411",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+     "request_id": "33488ce2d3dde41d7765cee9ed7e7411",
      "payload": {
       "status": "pending"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -2742,7 +2780,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+     "request_id": "33488ce2d3dde41d7765cee9ed7e7411",
      "payload": {
       "status": "ok",
       "eligible": true
@@ -2751,13 +2789,13 @@
     "notices": [
      {
       "engine_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "request_id": "4dfbe451d43e56d60d481f20b307d1a9",
+      "request_id": "33488ce2d3dde41d7765cee9ed7e7411",
       "seq": 1
      }
     ],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -2829,7 +2867,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2849,17 +2887,17 @@
       }
      }
     ],
-    "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+    "request_id": "a03a213c7cf682079cf3c07f818b334c",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+     "request_id": "a03a213c7cf682079cf3c07f818b334c",
      "payload": {
       "status": "pending"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -2872,7 +2910,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "592ed17cbb39f778e4fadffc6a5b7828",
+     "request_id": "a03a213c7cf682079cf3c07f818b334c",
      "payload": {
       "status": "ok",
       "eligible": false
@@ -2881,7 +2919,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -2956,7 +2994,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -2976,17 +3014,17 @@
       }
      }
     ],
-    "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+    "request_id": "e5b489a2a7b643d8b14172d139dc4cfa",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+     "request_id": "e5b489a2a7b643d8b14172d139dc4cfa",
      "payload": {
       "status": "pending"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -2999,7 +3037,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "ddae7f370ec0fdbb0e92b44acf2dcd61",
+     "request_id": "e5b489a2a7b643d8b14172d139dc4cfa",
      "payload": {
       "status": "unavailable",
       "error_code": "settings_changed"
@@ -3008,7 +3046,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -3077,7 +3115,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -3097,17 +3135,17 @@
       }
      }
     ],
-    "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+    "request_id": "1f2c107f839fe1032d6ce1d6d2047686",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+     "request_id": "1f2c107f839fe1032d6ce1d6d2047686",
      "payload": {
       "status": "pending"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -3120,7 +3158,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "bedf93bb0ca1b2ba37c3947cee4fe8dd",
+     "request_id": "1f2c107f839fe1032d6ce1d6d2047686",
      "payload": {
       "status": "pending"
      }
@@ -3128,7 +3166,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -3201,7 +3239,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -3221,17 +3259,17 @@
       }
      }
     ],
-    "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+    "request_id": "4d86147b986072080799e610981d9002",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+     "request_id": "4d86147b986072080799e610981d9002",
      "payload": {
       "status": "ok"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -3244,7 +3282,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "842cc2ff3d54cc9bb75023c323d34cb3",
+     "request_id": "4d86147b986072080799e610981d9002",
      "payload": {
       "status": "ok"
      }
@@ -3252,7 +3290,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -3287,7 +3325,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -3307,17 +3345,17 @@
       }
      }
     ],
-    "request_id": "9b509596801084b5534b0417999b1c0d",
+    "request_id": "53a6cc169df8d0ffc27429cde8dd1471",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "9b509596801084b5534b0417999b1c0d",
+     "request_id": "53a6cc169df8d0ffc27429cde8dd1471",
      "payload": {
       "status": "ok"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -3330,7 +3368,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "9b509596801084b5534b0417999b1c0d",
+     "request_id": "53a6cc169df8d0ffc27429cde8dd1471",
      "payload": {
       "status": "ok"
      }
@@ -3338,7 +3376,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -3405,7 +3443,7 @@
     },
     "state_after_start": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "handled": 1,
@@ -3425,17 +3463,17 @@
       }
      }
     ],
-    "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+    "request_id": "c551ceb85f2fca8c6b75058195cb01cf",
     "response_after_pump": {
      "seq": 1,
-     "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+     "request_id": "c551ceb85f2fca8c6b75058195cb01cf",
      "payload": {
       "status": "ok"
      }
     },
     "state_after_pump": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_pump": [
@@ -3448,7 +3486,7 @@
     ],
     "response_after_resolve": {
      "seq": 1,
-     "request_id": "274a669e95e2506c74f6be51dfb9f8f7",
+     "request_id": "c551ceb85f2fca8c6b75058195cb01cf",
      "payload": {
       "status": "ok"
      }
@@ -3456,7 +3494,7 @@
     "notices": [],
     "state_after_resolve": {
      "state": "ready",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "log_after_resolve": [
@@ -3483,7 +3521,7 @@
     "closed": true,
     "state": {
      "state": "stopped",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "response": null
@@ -3500,12 +3538,12 @@
     "closed": true,
     "state": {
      "state": "stopped",
-     "pid": 16464,
+     "pid": 10268,
      "updated_at": "float"
     },
     "response": {
      "seq": 1,
-     "request_id": "66cc51977c1152c92399f04628de9313",
+     "request_id": "17c6c249dd1b02c98c30c6d9a037d2e7",
      "payload": {
       "status": "ok"
      }

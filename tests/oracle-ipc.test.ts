@@ -5,13 +5,14 @@
  * 所以整数时间戳只能比较解析后的字段，小数时间戳才能逐字节比对。
  */
 
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { PROTOCOL_VERSION, responseWire } from "../src/contracts/envelope.js";
+import { CONTRACT_VERSION, PROTOCOL_VERSION, responseWire } from "../src/contracts/envelope.js";
 import { engineId, sequence } from "../src/domain/ids.js";
 import { expectOk } from "../src/domain/result.js";
 import { FileIpc } from "../src/ipc/file-ipc.js";
@@ -38,13 +39,14 @@ function prepare(directory: string): void {
 
 let minted = 0;
 
-function newIpc(name: string, hex?: string): { ipc: FileIpc; root: string } {
+function newIpc(name: string, hex?: string, now?: () => number): { ipc: FileIpc; root: string } {
   const root = join(workspace, name);
   const ipc = new FileIpc({
     requests: join(root, "ipc", "requests"),
     responses: join(root, "ipc", "responses"),
     prepareDirectory: prepare,
     randomHex: (bytes: number) => hex ?? (minted++).toString(16).padStart(bytes * 2, "0"),
+    ...(now === undefined ? {} : { now }),
   });
   return { ipc, root };
 }
@@ -84,6 +86,7 @@ describe("请求文件", () => {
       (error) => "publish failed: " + error,
     );
     expect(published.version).toBe(PROTOCOL_VERSION);
+    expect(published.contractVersion).toBe(CONTRACT_VERSION);
     expect(published.requestId).toBe(recorded.request_id);
 
     const file = onlyFile(join(root, "ipc", "requests"), ".json");
@@ -126,7 +129,7 @@ describe("响应文件", () => {
 
   it("读取最新响应并消费", () => {
     const recordedRequest = requestIdSchema.parse(JSON.parse(Object.values(oracle.responses.request_files)[0] ?? "{}"));
-    const { ipc, root } = newIpc("consume", recordedRequest.request_id);
+    const { ipc, root } = newIpc("consume", recordedRequest.request_id, () => 1001.25);
     const request = expectOk(
       ipc.publishRequest({
         engineId: ENGINE_A,
@@ -168,7 +171,7 @@ describe("响应文件", () => {
   });
 
   it("只在槽位里存在更新响应时拒绝旧答案", () => {
-    const { ipc, root } = newIpc("stale");
+    const { ipc, root } = newIpc("stale", undefined, () => 1003);
     const stale = expectOk(
       ipc.publishRequest({
         engineId: ENGINE_A,
@@ -242,7 +245,7 @@ describe("响应文件", () => {
 
   it("小数时间戳的字节可以逐字节比对", () => {
     const recorded = requestIdSchema.parse(JSON.parse(oracle.responses.request_bytes_fractional));
-    const { ipc, root } = newIpc("fractional", recorded.request_id);
+    const { ipc, root } = newIpc("fractional", recorded.request_id, () => 1001.25);
     const request = expectOk(
       ipc.publishRequest({
         engineId: ENGINE_C,
@@ -276,6 +279,56 @@ describe("响应文件", () => {
         payload: latest.payload,
       }),
     ).toEqual(oracle.responses.read_latest_fractional);
+  });
+});
+
+describe("contract_version 门控", () => {
+  function rewriteWithoutContract(root: string): void {
+    const directory = join(root, "ipc", "responses", "a".repeat(40));
+    const bodyPath = join(directory, "response-a.json");
+    const body = JSON.parse(readFileSync(bodyPath, "utf8")) as Record<string, unknown>;
+    delete body["contract_version"];
+    const text = JSON.stringify(body);
+    const marker = JSON.parse(readFileSync(join(directory, "response-a.ready"), "utf8")) as Record<string, unknown>;
+    marker["bytes"] = Buffer.byteLength(text);
+    marker["sha256"] = createHash("sha256").update(text, "utf8").digest("hex");
+    writeFileSync(bodyPath, text, "utf8");
+    writeFileSync(join(directory, "response-a.ready"), JSON.stringify(marker), "utf8");
+  }
+
+  it("正文缺 contract_version 时读取返回 null", () => {
+    const { ipc, root } = newIpc("cv-missing", undefined, () => 1001.5);
+    const request = expectOk(
+      ipc.publishRequest({
+        engineId: ENGINE_A,
+        seq: expectOk(sequence(1), (error) => "bad seq: " + error),
+        kind: "predict",
+        payload: validPayload,
+        now: 1000,
+      }),
+      (error) => "publish failed: " + error,
+    );
+    expectOk(ipc.publishResponse(request, { status: "ok", backend: "local" }, 1001.25), (error) => "response failed: " + error);
+    rewriteWithoutContract(root);
+    // 时钟停在 1001.5：过期门控放行，null 只能来自 contract_version 校验。
+    expect(expectOk(ipc.readLatestResponse(ENGINE_A), (error) => "read failed: " + error)).toBeNull();
+  });
+
+  it("响应超过 60 秒视为过期返回 null", () => {
+    const { ipc } = newIpc("cv-expired", undefined, () => 1062.25);
+    const request = expectOk(
+      ipc.publishRequest({
+        engineId: ENGINE_A,
+        seq: expectOk(sequence(1), (error) => "bad seq: " + error),
+        kind: "predict",
+        payload: validPayload,
+        now: 1000,
+      }),
+      (error) => "publish failed: " + error,
+    );
+    expectOk(ipc.publishResponse(request, { status: "ok", backend: "local" }, 1001.25), (error) => "response failed: " + error);
+    // created_at 1001.25，时钟 1062.25：正文完好，仅超龄。
+    expect(expectOk(ipc.readLatestResponse(ENGINE_A), (error) => "read failed: " + error)).toBeNull();
   });
 });
 

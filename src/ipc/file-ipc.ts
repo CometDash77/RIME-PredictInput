@@ -11,6 +11,7 @@ import { isAbsolute, join } from "node:path";
 import { randomBytes } from "node:crypto";
 
 import {
+  CONTRACT_VERSION,
   PROTOCOL_VERSION,
   RESPONSE_SLOTS,
   messageBytes,
@@ -110,7 +111,7 @@ function writeAll(path: string, data: Uint8Array): void {
   }
 }
 
-function readSlot(directory: string, slot: ResponseSlot, engineId: EngineId): ResponseRecord | null {
+function readSlot(directory: string, slot: ResponseSlot, engineId: EngineId, now: number): ResponseRecord | null {
   const markerPath = join(directory, `response-${slot}.ready`);
   const bodyPath = join(directory, `response-${slot}.json`);
   let marker: ReadyMarker | null;
@@ -122,7 +123,7 @@ function readSlot(directory: string, slot: ResponseSlot, engineId: EngineId): Re
     return null;
   }
   if (marker === null) return null;
-  return parseResponseRecord(marker, body, engineId);
+  return parseResponseRecord(marker, body, engineId, now);
 }
 
 function collectFiles(directory: string): string[] {
@@ -223,6 +224,7 @@ export class FileIpc {
     if (!minted.ok) return err("invalid request id");
     const envelope: RequestEnvelope = {
       version: PROTOCOL_VERSION,
+      contractVersion: CONTRACT_VERSION,
       engineId: input.engineId,
       seq: input.seq,
       requestId: minted.value,
@@ -395,7 +397,7 @@ export class FileIpc {
     const directory = join(this.#responses, engineId);
     const found: ResponseRecord[] = [];
     for (const slot of RESPONSE_SLOTS) {
-      const record = readSlot(directory, slot, engineId);
+      const record = readSlot(directory, slot, engineId, this.#now());
       if (record !== null) found.push(record);
     }
     let best: ResponseRecord | null = null;

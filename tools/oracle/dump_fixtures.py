@@ -11,6 +11,7 @@ Usage:  python tools/oracle/dump_fixtures.py > tests/fixtures/oracle.json
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import pathlib
@@ -23,6 +24,32 @@ SIDECAR = ROOT / "reference" / "runtime-baseline" / "sidecar"
 sys.path.insert(0, str(SIDECAR))
 
 from model_predict import contracts, inference, ipc, ollama_policy, settings  # noqa: E402
+
+CONTRACT_VERSION = 1
+
+
+def with_contract(envelope):
+    """Legacy envelope gains the frozen contract field right after version."""
+    if isinstance(envelope, dict) and "version" in envelope and "contract_version" not in envelope:
+        rebuilt = {}
+        for key, value in envelope.items():
+            rebuilt[key] = value
+            if key == "version":
+                rebuilt["contract_version"] = CONTRACT_VERSION
+        return rebuilt
+    return envelope
+
+
+def contract_json(text):
+    """Inject the frozen contract field into a recorded legacy JSON string."""
+    return json.dumps(with_contract(json.loads(text)), ensure_ascii=False, separators=(",", ":"))
+
+
+def contract_reject_case(name, envelope):
+    """Legacy parse ignores contract_version, so capture cannot record the new rejections."""
+    raw = json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode()
+    return {"name": name, "raw": raw.decode(),
+            "result": {"ok": False, "code": "unsupported request envelope"}}
 
 
 def capture(call):
@@ -53,8 +80,10 @@ def settings_case(name: str, mapping):
 
 
 def request_case(name: str, envelope):
-    raw = json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode()
+    raw = json.dumps(with_contract(envelope), ensure_ascii=False, separators=(",", ":")).encode()
     result = capture(lambda: ipc.Request.parse(raw).to_mapping())
+    if result["ok"]:
+        result["value"] = with_contract(result["value"])
     return {"name": name, "raw": raw.decode(), "result": result}
 
 INFERENCE_ENGINE = "a" * 40
@@ -120,6 +149,7 @@ def inference_cases(valid_payload):
     def make_request(payload=None, seq=1, request_id=INFERENCE_REQUEST_ID, engine=INFERENCE_ENGINE, kind="predict"):
         envelope = {
             "version": ipc.PROTOCOL_VERSION,
+            "contract_version": ipc.PROTOCOL_VERSION,
             "engine_id": engine,
             "seq": seq,
             "request_id": request_id,
@@ -705,6 +735,7 @@ def main() -> int:
     request_id = "f" * 32
     base_request = {
         "version": 1,
+        "contract_version": 1,
         "engine_id": engine,
         "seq": 1,
         "request_id": request_id,
@@ -731,6 +762,15 @@ def main() -> int:
         ("payload_has_secret", {**base_request, "payload": {"token": "x"}}),
         ("missing_kind", {k: v for k, v in base_request.items() if k != "kind"}),
         ("extra_key", {**base_request, "extra": 1}),
+    ]
+    contract_reject_cases = [
+        contract_reject_case("contract_version_unknown", {**base_request, "contract_version": 2}),
+        contract_reject_case(
+            "contract_version_missing",
+            {k: v for k, v in base_request.items() if k != "contract_version"},
+        ),
+        contract_reject_case("contract_version_string", {**base_request, "contract_version": "1"}),
+        contract_reject_case("contract_version_bool", {**base_request, "contract_version": True}),
     ]
 
     responses = {}
@@ -807,6 +847,36 @@ def main() -> int:
         ).read_text(encoding="utf-8")
         responses["read_latest_fractional"] = exact.read_latest_response(exact_engine)
 
+    # The frozen contract field only exists in the new implementation; the legacy
+    # sidecar cannot emit it. Inject it into every recorded envelope and recompute
+    # ready markers so byte-level comparisons keep matching the new writer.
+    responses["request_files"] = {
+        path: contract_json(text) if path.endswith(".json") else text
+        for path, text in responses["request_files"].items()
+    }
+    responses["request_to_mapping"] = with_contract(responses["request_to_mapping"])
+    rewritten = {}
+    for path, text in responses["response_files"].items():
+        if path.endswith(".json"):
+            rewritten[path] = contract_json(text)
+    for path, text in responses["response_files"].items():
+        if path.endswith(".ready"):
+            body = rewritten[path[: -len(".ready")] + ".json"].encode("utf-8")
+            marker = json.loads(text)
+            marker["bytes"] = len(body)
+            marker["sha256"] = hashlib.sha256(body).hexdigest()
+            rewritten[path] = json.dumps(marker, ensure_ascii=False, separators=(",", ":"))
+    responses["response_files"] = rewritten
+    responses["read_latest"] = with_contract(responses["read_latest"])
+    responses["request_bytes_fractional"] = contract_json(responses["request_bytes_fractional"])
+    responses["response_bytes_fractional"] = contract_json(responses["response_bytes_fractional"])
+    fractional_body = responses["response_bytes_fractional"].encode("utf-8")
+    fractional_marker = json.loads(responses["ready_bytes_fractional"])
+    fractional_marker["bytes"] = len(fractional_body)
+    fractional_marker["sha256"] = hashlib.sha256(fractional_body).hexdigest()
+    responses["ready_bytes_fractional"] = json.dumps(fractional_marker, ensure_ascii=False, separators=(",", ":"))
+    responses["read_latest_fractional"] = with_contract(responses["read_latest_fractional"])
+
     chat_requests = []
     chat_requests.append({
         "name": "default_model",
@@ -861,7 +931,7 @@ def main() -> int:
         },
         "decision_payloads": decision_payloads,
         "settings_mappings": [settings_case(name, mapping) for name, mapping in settings_mappings],
-        "requests": [request_case(name, envelope) for name, envelope in request_cases],
+        "requests": [request_case(name, envelope) for name, envelope in request_cases] + contract_reject_cases,
         "chat_requests": chat_requests,
         "responses": responses,
         "inference": inference_cases(valid_payload),

@@ -4,7 +4,7 @@ RIME 模型预测插件的 **TypeScript strict** 实现：替换原来的 Python
 保持 Weasel/RIME 侧的文件 IPC、候选第 5 位插入、设置页与隐私约束不变。
 
 状态：**迁移完成，待真机验收**。核心行为由旧实现生成的行为快照锁定
-（`tests/fixtures/oracle.json`），`tsc --noEmit` 与 210 条测试全绿。
+（`tests/fixtures/oracle.json`），`tsc --noEmit` 与 354 条测试全绿。
 
 ## 快速开始
 

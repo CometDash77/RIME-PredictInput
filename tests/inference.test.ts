@@ -151,6 +151,7 @@ function makeRequest(
 ): RequestEnvelope {
   const raw = JSON.stringify({
     version: 1,
+    contract_version: 1,
     engine_id: options.engine ?? INFERENCE_ENGINE,
     seq: options.seq ?? 1,
     request_id: options.requestId ?? INFERENCE_REQUEST_ID,

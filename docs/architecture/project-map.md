@@ -83,7 +83,7 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 
 ```
 pnpm install
-pnpm verify          # tsc --noEmit ×2 + vitest（210 条）
+pnpm verify          # tsc --noEmit ×2 + vitest（354 条）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
 pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
