@@ -23,6 +23,7 @@
 - Visual Studio 2019 BuildTools 16.11.37507.1，MSVC 14.29.30133（v142），Windows SDK 10.0.19041.0
 - VS 组件：VC.Tools.x86.x64、VC.ATL（x86/x64）、VC.MFC（x86/x64，`.rc` 编译需 `afxres.h`）、VC.Tools.ARM/ARM64 + VC.ATL.ARM/ARM64 + VC.MFC.ARM/ARM64（ARM64X wrapper 与 ARM 产物用）
 - NSIS 3.10 portable（本记录使用 `D:\VibeCoding\tools\nsis-3.10`）。警告：系统安装的 NSIS 3.08 自带的 winVer.nsh 缺 `WINVER_11`/`AtLeastWin11` define（WINVER 只到 10），编译 install.nsi:128 `${If} ${AtLeastWin11}` 报 `macro "_If" requires 4 parameter(s), passed 2`；换 3.10 后同一脚本直接通过
+- vswhere 可发现性（ARM64X wrapper 构建）：BuildTools-only 安装必须 `vswhere -products *` 才能命中（默认 products 只查 VS IDE 实例，BuildTools 实例会被漏掉，ARM64EC 工具链探测为空导致 arm64x_wrapper 构建失败）；fork commit `a9e575d`（fix(arm64x): make vswhere match BuildTools installs）已在 arm64x_wrapper/build.bat 修正，干净机器直接按 §3 走即可
 - Git（含 Git Bash）+ plum 子模块
 - 代理访问 GitHub（下载 librime 预编译包与 plum 配方）
 
@@ -30,7 +31,7 @@
 
 以下步骤均已在本机实际执行并验证。
 
-1. `git clone -b predict-0.17.4 --single-branch https://github.com/CometDash77/weasel`（上游基底 9cc96e2 + fork 版本注入 commit afef67a）
+1. `git clone -b predict-0.17.4 --single-branch https://github.com/CometDash77/weasel`（上游基底 9cc96e2 + fork commit afef67a 版本注入、a9e575d vswhere BuildTools 匹配修复）
 2. `git submodule update --init --depth 1 plum`（librime 子模块不拉：构建用预编译包，fork 零改动）
 3. `copy env.vs2019.bat env.bat`
 4. boost 1.84.0.7z 解压到 `deps\boost_1_84_0`；`set BOOST_ROOT=%CD%\deps\boost_1_84_0`；`build.bat boost arm64`（x86/x64/ARM/ARM64；`--with-filesystem,json,locale,regex,serialization,system,thread`，`BOOST_USE_WINAPI_VERSION=0x0603`(x86/x64)/`0x0A00`(arm)，toolset msvc-14.2，static/static，--build-type=complete）
@@ -51,7 +52,7 @@ if defined RELEASE_BUILD set PRODUCT_VERSION=%WEASEL_VERSION%-predict.%WEASEL_BU
 - `WEASEL_VERSION` 保持纯数字 `0.17.4`（NSIS `VIProductVersion` 四段纯数字硬约束，install.nsi:30）
 - 发版时 `set RELEASE_BUILD=1 && set WEASEL_BUILD=N`，产物文件名 `weasel-0.17.4-predict.N-installer.exe`，exe ProductVersion 字符串 `0.17.4-predict.N`，NSIS DisplayVersion `0.17.4.N`
 - 非 RELEASE_BUILD 本地验证构建不受影响（PRODUCT_VERSION 带 short hash）
-- 追溯链：上游 tag `0.17.4` → release commit `9cc96e2` → fork `predict-0.17.4` 分支（afef67a + 能力 commit）→ 发布 tag `predict-0.17.4.N`
+- 追溯链：上游 tag `0.17.4` → release commit `9cc96e2` → fork `predict-0.17.4` 分支（afef67a 版本注入 + a9e575d vswhere 修复 + 能力 commit）→ 发布 tag `predict-0.17.4.N`
 
 ## 5. librime 零改动边界（AC5 实证）
 
