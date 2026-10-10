@@ -14,7 +14,7 @@ import path from "node:path";
 
 import { compact, type JsonValue } from "../json/canonical.js";
 import { sha256Hex } from "../json/digest.js";
-import { isPlainPinyin, isSegmentable, readingMatches } from "./syllables.js";
+import { isPlainPinyin, isSegmentable, readingMatches } from "../domain/syllables.js";
 import { buildLexicon, labelTarget, type Lexicon, type SampleLabels } from "./dicts.js";
 import {
   ALL_DRAFT_SAMPLES,

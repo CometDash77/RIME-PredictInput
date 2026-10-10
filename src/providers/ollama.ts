@@ -26,10 +26,17 @@ import {
 } from "../contracts/ollama-wire.js";
 import { chatRequestBody, chatRequestWire, cloudIdentityFor, identityFor } from "../contracts/policy.js";
 import {
+  generationCloudIdentityFor,
+  generationIdentityFor,
+  generationRequestBody,
+  generationRequestWire,
+  parseGenerationText,
+} from "../contracts/generation.js";
+import {
   chatCompletionsRequest,
   parseChatCompletionsAnswer,
 } from "../contracts/cloud-wire.js";
-import type { DecisionInput } from "../domain/decision.js";
+import type { DecisionInput, DecisionMode } from "../domain/decision.js";
 import type { LocalBackendErrorCode } from "../domain/error-codes.js";
 import { sha256Hex } from "../json/digest.js";
 import { compact } from "../json/canonical.js";
@@ -77,17 +84,16 @@ export type PullStatus =
   | { readonly status: "cancelled"; readonly model: string | null }
   | { readonly status: "unavailable"; readonly errorCode: LocalBackendErrorCode; readonly model?: string | null };
 
-export type LocalInferenceOutcome =
-  | {
-      readonly kind: "ok";
-      readonly backend: "local";
-      readonly provider: "ollama" | "local-compat";
-      readonly model: string;
-      readonly choice: string;
-      readonly requestedModel: string;
-      readonly modelIdentity: string;
-    }
-  | { readonly kind: "unavailable"; readonly errorCode: LocalBackendErrorCode };
+export type LocalInferenceOk = {
+  readonly kind: "ok";
+  readonly backend: "local";
+  readonly provider: "ollama" | "local-compat";
+  readonly model: string;
+  readonly requestedModel: string;
+  readonly modelIdentity: string;
+} & ({ readonly choice: string } | { readonly text: string });
+
+export type LocalInferenceOutcome = LocalInferenceOk | { readonly kind: "unavailable"; readonly errorCode: LocalBackendErrorCode };
 
 export interface LocalBackendOptions {
   readonly transport?: HttpTransportLike;
@@ -98,6 +104,50 @@ export interface LocalBackendOptions {
   readonly sleep?: (seconds: number) => Promise<void>;
   readonly startupTimeout?: number;
   readonly inferenceTimeout?: number;
+}
+
+/** 两种模式的期望身份：身份把策略摘要编进模型 digest，模式不同即身份不同。 */
+function expectedIdentityFor(digest: string, mode: DecisionMode): string {
+  return mode === "generation" ? generationIdentityFor(digest) : identityFor(digest);
+}
+
+/** 原生路径一次调用所需的三件事：请求体、线上形态、答案解释；模式只在这里分叉。 */
+interface PreparedChat {
+  wire(keepAlive: boolean): JsonObject;
+  /** 模型回答 → 候选编号串（selection）或词条文本（generation）；null = 生成模式拒答。 */
+  parse(content: string): Result<string | null, "invalid_model_response">;
+}
+
+function prepareChat(
+  decision: DecisionInput,
+  model: string,
+): Result<PreparedChat, "candidate_fields_missing" | "unsupported_input" | "ambiguous_input"> {
+  if (decision.mode === "generation") {
+    const body = generationRequestBody(decision, model);
+    if (!body.ok) return err(body.error);
+    const value = body.value;
+    return ok({
+      wire: (keepAlive) => generationRequestWire(value, { keepAlive }),
+      parse: (content) => parseGenerationText(content),
+    });
+  }
+  const body = chatRequestBody(decision, model);
+  if (!body.ok) return err(body.error);
+  const value = body.value;
+  const limit = decision.candidates.length;
+  return ok({
+    wire: (keepAlive) => chatRequestWire(value, { keepAlive }),
+    parse: (content) => {
+      const answer = parseStrictObject(content);
+      if (!answer.ok) return err("invalid_model_response");
+      const keys = Object.keys(answer.value);
+      if (keys.length !== 1 || keys[0] !== "choice") return err("invalid_model_response");
+      const choice = answer.value["choice"];
+      if (typeof choice !== "number" || !Number.isInteger(choice)) return err("invalid_model_response");
+      if (choice < 1 || choice > limit) return err("invalid_model_response");
+      return ok(String(choice));
+    },
+  });
 }
 
 /** Python 的真值判断，`[]` 与 `{}` 在这里也是假，和 JS 不同。 */
@@ -325,9 +375,10 @@ export class LocalBackend {
       identity = resolved.value.identity;
     }
     try {
-      const body = chatRequestBody(decision, settings.localModel);
-      // 旧实现里缺候选字段会在这一步抛 ValueError，并被归入 invalid_model_response。
-      if (!body.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
+      const prepared = prepareChat(decision, settings.localModel);
+      // 旧实现里缺候选字段会在这一步抛 ValueError，并被归入 invalid_model_response；
+      // 生成模式下「拼音切不动 / 切分过多」同属发不出去。
+      if (!prepared.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
       const loaded = await this.#request("GET", "/api/ps", { timeout: 1 });
       if (!loaded.ok) return { kind: "unavailable", errorCode: loaded.error };
       // 读不到「谁加载了模型」就不能断言归属，宁可不答。
@@ -342,7 +393,7 @@ export class LocalBackend {
         return (item.data.name ?? item.data.model) === settings.localModel;
       });
       const digest = this.#digests.get(settings.localModel);
-      if (digest === undefined || digest === "unknown" || identityFor(digest) !== identity) {
+      if (digest === undefined || digest === "unknown" || expectedIdentityFor(digest, decision.mode) !== identity) {
         throw new Error("model_identity_changed");
       }
       if (!preexisting) {
@@ -350,7 +401,7 @@ export class LocalBackend {
         this.#loadedByUs.set(settings.localModel, digest);
       }
       const keepAlive = preexisting && !this.#loadedByUs.has(settings.localModel) ? false : true;
-      const wire = chatRequestWire(body.value, { keepAlive });
+      const wire = prepared.value.wire(keepAlive);
       const response = await this.#request("POST", "/api/chat", { payload: wire, timeout: this.#inferenceTimeout });
       if (!response.ok) return { kind: "unavailable", errorCode: response.error };
       if (response.value.status !== 200) {
@@ -361,22 +412,20 @@ export class LocalBackend {
       const chat = ChatResponseSchema.safeParse(decoded.value);
       if (!chat.success || chat.data.model !== settings.localModel) throw new Error("invalid_response_identity");
       if (pythonTruthy(chat.data.message.thinking)) throw new Error("thinking_not_allowed");
-      const answer = parseStrictObject(chat.data.message.content);
+      const answer = prepared.value.parse(chat.data.message.content);
       if (!answer.ok) throw new Error("invalid_response_choice");
-      const keys = Object.keys(answer.value);
-      if (keys.length !== 1 || keys[0] !== "choice") throw new Error("invalid_response_choice");
-      const choice = answer.value["choice"];
-      if (typeof choice !== "number" || !Number.isInteger(choice)) throw new Error("invalid_response_choice");
-      if (choice < 1 || choice > decision.candidates.length) throw new Error("choice_out_of_range");
-      return {
-        kind: "ok",
-        backend: "local",
-        provider: "ollama",
+      const value = answer.value;
+      // 生成模式下 null = 模型自己说「这次转换不可靠」，与不合规分开记。
+      if (value === null) return { kind: "unavailable", errorCode: "generation_declined" };
+      const base = {
+        kind: "ok" as const,
+        backend: "local" as const,
+        provider: "ollama" as const,
         model: settings.localModel,
-        choice: String(choice),
         requestedModel: settings.localModel,
         modelIdentity: identity,
       };
+      return decision.mode === "generation" ? { ...base, text: value } : { ...base, choice: value };
     } catch {
       return { kind: "unavailable", errorCode: "invalid_model_response" };
     }
@@ -394,7 +443,13 @@ export class LocalBackend {
     settings: Settings,
     options: { readonly modelIdentity?: string },
   ): Promise<LocalInferenceOutcome> {
-    const identity = options.modelIdentity ?? cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel);
+    // 没带身份时按模式各算各的：生成用的是另一份策略摘要，混用会让下游的
+    // 身份复核把一次合法回答判成不匹配。
+    const identity =
+      options.modelIdentity ??
+      (decision.mode === "generation"
+        ? generationCloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel)
+        : cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel));
     const prepared = chatCompletionsRequest({
       endpoint: settings.localBaseUrl,
       model: settings.localModel,
@@ -414,17 +469,24 @@ export class LocalBackend {
       }
       const decoded = decodeJsonBody(response.value.body);
       if (!decoded.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
-      const answer = parseChatCompletionsAnswer(decoded.value, decision.candidates.length);
+      const answer = parseChatCompletionsAnswer(decoded.value, decision);
       if (!answer.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
-      return {
-        kind: "ok",
-        backend: "local",
-        provider: "local-compat",
+      const value = answer.value;
+      if (value === null) {
+        return {
+          kind: "unavailable",
+          errorCode: decision.mode === "generation" ? "generation_declined" : "invalid_model_response",
+        };
+      }
+      const base = {
+        kind: "ok" as const,
+        backend: "local" as const,
+        provider: "local-compat" as const,
         model: settings.localModel,
-        choice: answer.value,
         requestedModel: settings.localModel,
         modelIdentity: identity,
       };
+      return decision.mode === "generation" ? { ...base, text: value } : { ...base, choice: value };
     } catch {
       return { kind: "unavailable", errorCode: "invalid_model_response" };
     }

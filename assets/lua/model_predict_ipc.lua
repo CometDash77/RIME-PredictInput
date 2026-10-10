@@ -42,6 +42,9 @@ end
 
 local DEFAULT_SETTINGS = {
     enabled = false,
+    --- 生成模式默认关闭（Q6A）：质量未达发布门槛前，它只是随包发布的实验性能力，
+    --- 前端不把它当成默认路径。
+    generation_enabled = false,
     backend = "local",
     provider = json.null,
     local_model = DEFAULT_LOCAL_MODEL,
@@ -74,6 +77,7 @@ end
 local function settings_table()
     return {
         enabled = DEFAULT_SETTINGS.enabled,
+        generation_enabled = DEFAULT_SETTINGS.generation_enabled,
         backend = DEFAULT_SETTINGS.backend,
         provider = DEFAULT_SETTINGS.provider,
         local_model = DEFAULT_SETTINGS.local_model,
@@ -90,6 +94,7 @@ local function sanitize_settings(value)
     if value.backend ~= "local" then return settings end
     if value.provider ~= nil and value.provider ~= json.null then return settings end
     if value.enabled == true then settings.enabled = true end
+    if value.generation_enabled == true then settings.generation_enabled = true end
     local model = value.local_model
     if type(model) == "string" and #model > 0 and #model <= 80 and model:match(MODEL_PATTERN) then
         settings.local_model = model

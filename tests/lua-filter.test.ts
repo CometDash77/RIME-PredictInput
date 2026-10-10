@@ -14,6 +14,9 @@
  *   5. 变化后作废旧结果、通知只触发刷新 —— "输入变化后…"、"设置变化后…"、
  *      "完成通知本身不产生候选"、"只有用户选中模型候选才算采纳"；
  *   6. 覆盖方式 —— 全程真实文件 IPC + 真实 Lua，不用 UI 自动化。
+ *
+ * S6 追加：生成模式的开关与请求里的 mode，以及"模型只能在词库里挑词条"所依赖的
+ * 候选窗口 —— 窗口只放一页时，一页之外的编号没有任何意义。
  */
 
 import { createHash } from "node:crypto";
@@ -32,7 +35,9 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { RequestEnvelope } from "../src/contracts/envelope.js";
-import { expectOk } from "../src/domain/result.js";
+import { decisionInputFromPayload } from "../src/domain/decision.js";
+import { resolveGeneratedWord } from "../src/domain/generation.js";
+import { expectOk, isOk } from "../src/domain/result.js";
 import { DEFAULT_MODEL, DEFAULT_SETTINGS, toWire, type Settings } from "../src/domain/settings.js";
 import { FileIpc } from "../src/ipc/file-ipc.js";
 import type { JsonObject } from "../src/json/guards.js";
@@ -51,6 +56,12 @@ const CANDIDATES: readonly FixtureCandidate[] = [
   { text: "尼", preedit: "ni", start: 0, finish: 2 },
   { text: "呢", preedit: "ni", start: 0, finish: 2 },
   { text: "泥", preedit: "ni", start: 0, finish: 2 },
+];
+/** 一页装不下的"ni"：六个候选，页面大小还是 5 —— 两种模式在这里分道。 */
+const WIDE_CANDIDATES: readonly FixtureCandidate[] = [
+  ...CANDIDATES,
+  { text: "腻", preedit: "ni", start: 0, finish: 2 },
+  { text: "匿", preedit: "ni", start: 0, finish: 2 },
 ];
 const MODEL_IDENTITY = `ollama:${"a".repeat(64)}`;
 const TASK = "中文输入法候选选择";
@@ -549,6 +560,72 @@ describe("Lua 滤镜与 sidecar 的文件 IPC 闭环", () => {
     expect(harness.launchCount()).toBe(0);
     // 请求照发（sidecar 不在时没人答，超时后被清掉），普通输入不等它。
     expect(predictRequests(ipc)).toHaveLength(1);
+  });
+
+  it("生成模式开启时把词库摊到一页之外，回来的词条按显示编号插入", async () => {
+    const { harness, ipc } = await fixture({
+      settings: { enabled: true, generationEnabled: true },
+    });
+    const rendered = await typeText(harness, INPUT, WIDE_CANDIDATES);
+    expect(textsOf(rendered)).toEqual(["你", "尼", "呢", "泥", "", "腻", "匿"]);
+
+    const request = solePredictRequest(ipc);
+    const payload = request.payload as Record<string, unknown>;
+    expect(payload["mode"]).toBe("generation");
+    expect(payload["candidates"]).toEqual(["你", "尼", "呢", "泥", "腻", "匿"]);
+    expect(payload["candidate_fields"]).toHaveLength(6);
+
+    // 滤镜写出去的载荷必须原样被运行时接受，且第 6 个词条要能通过词库校验。
+    const decision = decisionInputFromPayload(payload);
+    if (!isOk(decision) || decision.value.mode !== "generation") {
+      throw new Error("运行时没有接受生成模式的载荷");
+    }
+    expect(resolveGeneratedWord("匿", decision.value)).toEqual({ ok: true, value: 6 });
+
+    publish(ipc, request, okPayload(6));
+    const adopted = await harness.run();
+    expect(adopted).toHaveLength(7);
+    expect(adopted[4]).toMatchObject({ type: "model_predict", text: "匿" });
+  });
+
+  it("生成模式默认关闭：请求写 selection，一页之外的编号不被认", async () => {
+    const { harness, ipc } = await fixture({ settings: { enabled: true } });
+    await typeText(harness, INPUT, WIDE_CANDIDATES);
+    const request = solePredictRequest(ipc);
+    const payload = request.payload as Record<string, unknown>;
+    expect(payload["mode"]).toBe("selection");
+    expect(payload["candidates"]).toEqual(["你", "尼", "呢", "泥", "腻"]);
+
+    // 模型报了一个只在词库里有、当前这一页没有的编号：不是显示编号，槽位留空。
+    publish(ipc, request, okPayload(6));
+    const rendered = await harness.run();
+    expect(rendered.filter((candidate) => candidate.type === "model_predict")).toEqual([]);
+    expect(rendered[4]).toMatchObject({ type: "model_predict_reserved", text: "" });
+  });
+
+  it("开关切换算设置变化：旧答案作废，模式、窗口与指纹一起换", async () => {
+    const { harness, ipc } = await fixture({ settings: { enabled: true } });
+    await typeText(harness, INPUT, WIDE_CANDIDATES);
+    const first = solePredictRequest(ipc);
+    publish(ipc, first, okPayload(2));
+    expect((await harness.run()).some((candidate) => candidate.type === "model_predict")).toBe(
+      true,
+    );
+
+    writeSettings(harness, { enabled: true, generationEnabled: true });
+    const after = await harness.run();
+    expect(after.filter((candidate) => candidate.type === "model_predict")).toEqual([]);
+    expect(after[4]).toMatchObject({ type: "model_predict_reserved" });
+
+    const next = solePredictRequest(ipc);
+    expect(next.seq).toBe(2);
+    const payload = next.payload as Record<string, unknown>;
+    expect(payload["mode"]).toBe("generation");
+    expect(payload["candidates"]).toHaveLength(6);
+    // 同一段输入、同一份候选，换模式就是另一个问题：指纹不能复用。
+    expect(payload["candidate_fingerprint"]).not.toBe(
+      (first.payload as Record<string, unknown>)["candidate_fingerprint"],
+    );
   });
 
   it("发布用的 host 与测试替身的端口集合完全一致", async () => {

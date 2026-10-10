@@ -227,11 +227,14 @@ local function launch_if_due(env)
     pcall(ipc.start_sidecar)
 end
 
-local function fingerprint_of(env, settings_revision, state, candidates, fields)
+--- 模式也算进指纹：同一段输入下「挑一个候选」和「写一个词条」问的是两个问题，
+--- 换模式必须换发请求，不能复用上一个模式的答案。
+local function fingerprint_of(env, settings_revision, state, candidates, fields, mode)
     local ok, encoded = pcall(json.encode, {
         candidates = candidates,
         candidate_fields = fields,
         context_revision = env.context_revision,
+        mode = mode,
         settings = settings_revision,
         state = state,
     })
@@ -239,10 +242,11 @@ local function fingerprint_of(env, settings_revision, state, candidates, fields)
     return json.sha256(encoded)
 end
 
-local function publish_request(env, state, candidates, fields, settings_revision, fingerprint)
+local function publish_request(env, state, candidates, fields, settings_revision, fingerprint, mode)
     launch_if_due(env)
     env.seq = env.seq + 1
     local published = ipc.publish(env.root, env.engine_id, env.seq, {
+        mode = mode,
         state = state,
         candidates = candidates,
         candidate_fields = fields,
@@ -259,7 +263,7 @@ local function publish_request(env, state, candidates, fields, settings_revision
     }
 end
 
-local function request_choice(env, settings, settings_revision, state, candidates, fields, fingerprint)
+local function request_choice(env, settings, settings_revision, state, candidates, fields, fingerprint, mode)
     local ready = env.ready
     if ready ~= nil and ready.fingerprint == fingerprint then
         refresh_identity(env, ready.pending)
@@ -280,7 +284,7 @@ local function request_choice(env, settings, settings_revision, state, candidate
         cancel_pending(env)
     end
 
-    local published = publish_request(env, state, candidates, fields, settings_revision, fingerprint)
+    local published = publish_request(env, state, candidates, fields, settings_revision, fingerprint, mode)
     if published == nil then return nil, nil end
     pending = published
     env.pending = pending
@@ -449,7 +453,11 @@ function M.func(input, env)
         return
     end
 
+    --- 生成模式要把词库摊得更宽：模型只能从送出去的候选里挑词条，窗口多宽，
+    --- 可命中的词就有多少（选择模式的编号必须是显示编号，所以仍只送一页）。
+    local mode = settings.generation_enabled == true and "generation" or "selection"
     local limit = math.min(#candidates, env.page_size or DEFAULT_PAGE_SIZE)
+    if mode == "generation" then limit = math.min(#candidates, MAX_CANDIDATES) end
     local texts = {}
     local fields = {}
     for index = 1, limit do
@@ -463,11 +471,11 @@ function M.func(input, env)
     end
 
     local state = { task = TASK, preceding_text = preceding, pinyin = pinyin }
-    local fingerprint = fingerprint_of(env, revision, state, texts, fields)
+    local fingerprint = fingerprint_of(env, revision, state, texts, fields, mode)
     local choice = nil
     local pending = nil
     if fingerprint ~= nil then
-        local ok, chosen, waiting = pcall(request_choice, env, settings, revision, state, texts, fields, fingerprint)
+        local ok, chosen, waiting = pcall(request_choice, env, settings, revision, state, texts, fields, fingerprint, mode)
         if not ok then
             env.pending = nil
             env.ready = nil

@@ -35,9 +35,11 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 - `src/json/`：`canonical.ts`（Python 对齐的 JSON 编码 + `pythonNumber`）、`digest.ts`（sha256/摘要/正则）、
   `strict.ts`（重复键敏感解析）、`guards.ts`（`JsonObject`/`isJsonObject`）。
 - `src/domain/`：`result.ts`、`ids.ts`（品牌 ID）、`error-codes.ts`（全部错误码联合 + 安全码正则）、
-  `settings.ts`（设置模型 + 线格式 + `settingsEqual`）、`decision.ts`（决策输入 + 两个摘要）、
+  `settings.ts`（设置模型 + 线格式 + `settingsEqual`）、`decision.ts`（决策输入 + 模式判别 + 两个摘要）、
+  `generation.ts`（生成模式：词库成员/读音/音节/长度校验）、`syllables.ts`（音节表，评测与生成共用）、
   `candidate.ts`、`context.ts`（上文快照）、`model.ts`、`secret-keys.ts`、`status.ts`、`cache-limits.ts`。
-- `src/contracts/`：`policy.ts`（固定策略身份与聊天请求体）、`envelope.ts`（请求信封/响应槽位/就绪标记）、
+- `src/contracts/`：`policy.ts`（固定策略身份与聊天请求体）、`generation.ts`（生成模式的冻结提示词、采样参数与答案解析）、
+  `envelope.ts`（请求信封/响应槽位/就绪标记）、
   `ollama-wire.ts`（外部 JSON 的 zod 边界）。
 - `src/ipc/`：`file-ipc.ts`、`app-paths.ts`；`src/settings/`：`store.ts`、`private-directory.ts`。
 - `src/providers/`：`http.ts`、`ollama.ts`、`wire.ts`。
@@ -48,14 +50,16 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 - `src/web/`：`settings-host.ts`、`safe-metadata.ts`、`launcher.ts`、`native-alert.ts`。
 - `src/cli/`：`main.ts`、`selftest.ts`。
 - `assets/lua/`：`model_predict_host.lua`（io/os/启动器端口）、`model_predict_json.lua`（与旧实现逐字节相同）、
-  `model_predict_ipc.lua`（请求/响应文件契约，含 contract_version 门控）、`model_predict_filter.lua`（滤镜主体，把有效结果插进第 5 槽位）。
+  `model_predict_ipc.lua`（请求/响应文件契约，含 contract_version 门控与 `generation_enabled` 净化）、
+  `model_predict_filter.lua`（滤镜主体：算 `mode`、按模式决定候选窗口、把有效结果插进第 5 槽位）。
 
 ## 核心类型（改这些要先看消费者）
 
 - `Result<T, E>`（`domain/result.ts`）：全项目没有例外抛错，只有端口处才允许 reject。
 - `EngineId`/`RequestId`/`Sequence`（`domain/ids.ts`）：品牌类型，构造必须走智能构造器。
 - `Settings` + `toWire`/`settingsFromMapping`（`domain/settings.ts`）：域模型与线格式的唯一转换点。
-- `DecisionInput`（`domain/decision.ts`）：外部载荷 → 决策输入的**唯一**入口，错误码与旧实现逐字一致。
+- `DecisionInput`（`domain/decision.ts`）：外部载荷 → 决策输入的**唯一**入口，错误码与旧实现逐字一致；
+  `mode` 判别的唯一入口（缺省 = selection，见 ADR 0007）。
 - `RequestEnvelope`/`ResponseRecord`/`ReadyMarker`（`contracts/envelope.ts`）：IPC 契约。
 - `PredictionOutcome`（`inference/outcome.ts`）：`ok`/`unavailable`/`pending` 判别联合，
   `predictionWire` 决定 Lua 看到的键序。
@@ -78,7 +82,9 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 | `tests/cloud-channels.test.ts` | 33 | 四类云端通道的请求体、错误码与凭据边界 |
 | `tests/inference.test.ts` | 48 | 46 条旧行为快照 + 缓存/router/状态/动作 |
 | `tests/runtime.test.ts` | 17 | 13 个请求泵场景 + 2 个运行循环 + 构造期回落 |
-| `tests/lua-filter.test.ts` | 13 | 真 Lua 滤镜 + 真文件 IPC：请求组装、a/b 槽位、消费即删、失败留空、过期作废、第 5 槽位 |
+| `tests/generation-domain.test.ts` | 20 | 模式判别与错误码、词库成员/读音/音节/长度校验、生成请求形状、答案解析、生成身份与选择身份隔离 |
+| `tests/generation-mode.test.ts` | 14 | 通道与服务层的生成路径：请求体键序、`generation_declined`、开关闸门、身份不合格、词条→编号、缓存按模式隔离 |
+| `tests/lua-filter.test.ts` | 16 | 真 Lua 滤镜 + 真文件 IPC：请求组装、a/b 槽位、消费即删、失败留空、过期作废、第 5 槽位、生成模式的 `mode` 与候选窗口 |
 | `tests/lifecycle.test.ts` | 11 | 单实例锁、空闲释放、启动清理过期瞬态文件（真进程假 sidecar） |
 | `tests/launcher.test.ts` | 8 | 返回码 0/2/3/4/5 与轮询顺序 + selftest 绿灯 |
 | `tests/install-plan.test.ts` | 11 | 安装计划纯函数 |
@@ -96,7 +102,7 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 
 ```
 pnpm install
-pnpm verify          # tsc --noEmit ×2 + vitest（378 条）
+pnpm verify          # tsc --noEmit ×2 + vitest（415 条：414 通过 + 1 跳过）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
 pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
@@ -110,6 +116,7 @@ pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
 - 改设置字段 → 跑 `oracle-settings` + `settings-store` + `settings-host`。
 - 改请求泵/状态文件/日志 → 跑 `runtime`。
 - 改提供方 → 跑 `providers`（假 transport，不打真实 Ollama）。
+- 改模式判别、生成校验或生成身份 → 跑 `generation-domain` + `generation-mode` + `lua-filter`（ADR 0007）。
 - 改 Lua 滤镜或它的文件 IPC 端 → 跑 `lua-filter` + `lifecycle`（真 Lua 资产、真 IPC 文件、真子进程；不要引 UI 自动化，见 ADR 0006）。
 
 ## 已知技术债

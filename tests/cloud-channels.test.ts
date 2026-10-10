@@ -171,7 +171,7 @@ describe("custom 通道", () => {
       url === "http://127.0.0.1:8000/v1/chat/completions" ? chatCompletionsOk("3") : { failure: "network_unavailable" },
     );
     const outcome = await backend.infer(decision, customChannel);
-    expect(outcome.kind === "ok" && outcome.choice).toBe("3");
+    expect(outcome.kind === "ok" && "choice" in outcome ? outcome.choice : null).toBe("3");
     const call = transport.callsFor("POST", "http://127.0.0.1:8000/v1/chat/completions")[0];
     if (call === undefined) throw new Error("expected a custom endpoint call");
     expect("Authorization" in call.headers).toBe(false);
@@ -196,7 +196,7 @@ describe("openai-responses", () => {
         : { failure: "network_unavailable" },
     );
     const outcome = await backend.infer(decision, responsesChannel);
-    expect(outcome.kind === "ok" && outcome.choice).toBe("2");
+    expect(outcome.kind === "ok" && "choice" in outcome ? outcome.choice : null).toBe("2");
     const call = transport.callsFor("POST", OPENAI_RESPONSES_ENDPOINT + "/responses")[0];
     if (call === undefined) throw new Error("expected a responses call");
     const body = decodedBody(call);
@@ -223,7 +223,7 @@ describe("anthropic", () => {
         : { failure: "network_unavailable" },
     );
     const outcome = await backend.infer(decision, anthropicChannel);
-    expect(outcome.kind === "ok" && outcome.choice).toBe("1");
+    expect(outcome.kind === "ok" && "choice" in outcome ? outcome.choice : null).toBe("1");
     const call = transport.callsFor("POST", ANTHROPIC_ENDPOINT + "/messages")[0];
     if (call === undefined) throw new Error("expected a messages call");
     expect(Object.keys(call.headers)).toEqual(["Content-Type", "x-api-key", "anthropic-version"]);

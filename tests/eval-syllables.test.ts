@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { isPlainPinyin, isSegmentable, segmentations, readingMatches } from "../src/eval/syllables.js";
+import { isPlainPinyin, isSegmentable, segmentations, readingMatches } from "../src/domain/syllables.js";
 
 describe("isPlainPinyin", () => {
   it("接受纯小写字母", () => {

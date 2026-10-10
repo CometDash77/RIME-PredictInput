@@ -48,6 +48,11 @@ export const THRESHOLD_IDENTITY_PATTERN = /^[A-Za-z0-9:._/-]{1,160}$/;
  */
 export interface Settings {
   readonly enabled: boolean;
+  /**
+   * 生成能力开关（决策 05 Q6A）：#13 六臂全部未达标 ⇒ 默认关闭、作为实验性能力
+   * 随包发布。它是**服务端也权威**的开关：关掉时生成请求直接以 disabled 留空。
+   */
+  readonly generationEnabled: boolean;
   readonly backend: Backend;
   readonly provider: null;
   readonly localModel: string;
@@ -64,6 +69,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: false,
+  generationEnabled: false,
   backend: "local",
   provider: null,
   localModel: DEFAULT_MODEL,
@@ -91,6 +97,7 @@ export const SETTINGS_WIRE_KEYS = [
   "cloud_enabled",
   "cloud",
   "update_check_enabled",
+  "generation_enabled",
 ] as const;
 
 export type CloudChannelWire = {
@@ -116,6 +123,8 @@ export type SettingsWire = {
   readonly cloud?: CloudChannelWire;
   /** 默认开（omit-if-default 反向）：只在用户关闭时写出。 */
   readonly update_check_enabled?: boolean;
+  /** 默认关（决策 05 Q6A）：只在用户（或安装器）显式打开时写出。 */
+  readonly generation_enabled?: boolean;
 }
 
 function cloudToWire(cloud: CloudChannel): CloudChannelWire {
@@ -136,6 +145,7 @@ export function toWire(settings: Settings): SettingsWire {
     ...(settings.cloudEnabled ? { cloud_enabled: true } : {}),
     ...(settings.cloud === null ? {} : { cloud: cloudToWire(settings.cloud) }),
     ...(settings.updateCheckEnabled ? {} : { update_check_enabled: false }),
+    ...(settings.generationEnabled ? { generation_enabled: true } : {}),
   };
 }
 
@@ -198,6 +208,7 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
   }
 
   const enabled = raw["enabled"] ?? false;
+  const generationEnabled = raw["generation_enabled"] ?? false;
   const backend = raw["backend"] ?? "local";
   const provider = raw["provider"] ?? null;
   const localModel = raw["local_model"] ?? DEFAULT_MODEL;
@@ -211,6 +222,7 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
   const updateCheckEnabled = raw["update_check_enabled"] ?? true;
 
   if (typeof enabled !== "boolean") return settingsError("enabled must be a boolean");
+  if (typeof generationEnabled !== "boolean") return settingsError("generation_enabled must be a boolean");
   if (backend !== "local" || provider !== null) return settingsError("local_only");
   if (typeof localModel !== "string" || !MODEL_NAME_PATTERN.test(localModel.trim())) {
     return settingsError("local_model is invalid");
@@ -289,6 +301,7 @@ export function settingsFromMapping(raw: unknown): Result<Settings, SettingsErro
 
   return ok({
     enabled,
+    generationEnabled,
     backend: "local",
     provider: null,
     localModel: localModel.trim(),
@@ -322,6 +335,7 @@ function cloudEqual(left: CloudChannel | null, right: CloudChannel | null): bool
 export function settingsEqual(left: Settings, right: Settings): boolean {
   if (
     left.enabled !== right.enabled ||
+    left.generationEnabled !== right.generationEnabled ||
     left.backend !== right.backend ||
     left.provider !== right.provider ||
     left.localModel !== right.localModel ||
