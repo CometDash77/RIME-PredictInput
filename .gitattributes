@@ -10,3 +10,7 @@
 eval/holdout/samples.jsonl -text
 eval/holdout/manifest.json -text
 eval/fixtures/*.json -text
+# 归档的许可证正文与自有许可证必须保持原始字节：`pnpm release:check` 按正文逐字比对，
+# 换行转换（CRLF）会让「声明与安装树一致」这条判据在别的机器上失败。
+LICENSE -text
+docs/license/*.txt -text

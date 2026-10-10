@@ -52,6 +52,12 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
   `child-process.ts`、`clock.ts`。
 - `src/web/`：`settings-host.ts`、`safe-metadata.ts`、`launcher.ts`、`native-alert.ts`。
 - `src/cli/`：`main.ts`、`selftest.ts`。
+- `src/release/`（**不随 sidecar 产物发布**的发布工程）：`licenses.ts`（从安装树读许可证清单）、
+  `notices.ts`（渲染第三方声明并反查一致性）、`credential-policy.ts`（凭据词表、基线及其理由）、
+  `credential-scan.ts`（基线/边界/产物三层扫描）、`shipset.ts`（发布物声明与枚举）、
+  `release-notes.ts`（Release notes 必备内容判据）、`gate.ts`（十三条检查合成归档报告）、
+  `stage.ts`（把许可证与声明放进 `dist/release/`）、`main.ts`（`release:check|notices|stage` 入口）。
+  另见 ADR 0009。
 - `assets/lua/`：`model_predict_host.lua`（io/os/启动器端口）、`model_predict_json.lua`（与旧实现逐字节相同）、
   `model_predict_ipc.lua`（请求/响应文件契约，含 contract_version 门控与 `generation_enabled` 净化）、
   `model_predict_filter.lua`（滤镜主体：算 `mode`、按模式决定候选窗口、把有效结果插进第 5 槽位）。
@@ -102,6 +108,9 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 | `tests/eval-rig.test.ts` | 22 | 评测台架 |
 | `tests/eval-syllables.test.ts` | 11 | 音节切分 |
 | `tests/weasel-messenger-koffi.test.ts` | 3（+1 跳过） | koffi 窗口消息；没有真 WeaselServer 时跳过窗口级用例 |
+| `tests/release-licenses.test.ts` | 8 | 许可证清单读自安装树、内嵌运行时正文、第三方声明与清单一致（ADR 0009） |
+| `tests/release-credentials.test.ts` | 16 | 凭据词表与基线、完成通知/日志零容忍边界、发布物扫描、个人数据、发布物清单、Release notes 判据 |
+| `tests/release-gate.test.ts` | 17 | 端到端 gate：干净仓库放行、逐条反例挡下、报告归档（含「夹具同形」防漂移） |
 
 快照文件 `tests/fixtures/oracle.json` 由 `pnpm fixtures` 从旧实现重新生成；
 `tests/support/oracle.ts` 用 zod 把它解析成类型，`tests/support/json.ts` 负责把
@@ -111,11 +120,14 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 
 ```
 pnpm install
-pnpm verify          # tsc --noEmit ×2 + vitest（445 条：444 通过 + 1 跳过）
+pnpm verify          # tsc --noEmit ×2 + vitest（488 条：487 通过 + 1 跳过）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
 pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
 pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
+pnpm release:notices -- --write   # 从安装树刷新 THIRD-PARTY-NOTICES.md
+pnpm release:stage                # 把 LICENSE 与声明放进 dist/release/
+pnpm release:check -- --tag v0.1.0 # 发布合规 gate：PASS 才允许发布（ADR 0009）
 ```
 
 ## 改动指引
@@ -128,6 +140,9 @@ pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
 - 改模式判别、生成校验或生成身份 → 跑 `generation-domain` + `generation-mode` + `lua-filter`（ADR 0007）。
 - 改 Lua 滤镜或它的文件 IPC 端 → 跑 `lua-filter` + `lifecycle`（真 Lua 资产、真 IPC 文件、真子进程；不要引 UI 自动化，见 ADR 0006）。
 - 改安装路径表/安装计划/执行器 → 跑 `install-paths` + `install-plan` + `install-executor` + `install-replay`（ADR 0008）。
+- 改发布判据（凭据词表/基线、产物清单、Release notes 必备内容）→ 跑 `release-credentials` + `release-gate`；
+  凭据基线变动要同时给出理由（`src/release/credential-policy.ts`），并重跑 `pnpm release:check`（ADR 0009）。
+- 改依赖版本或 Node 内嵌版本 → 跑 `pnpm release:notices -- --write` 刷新声明，再跑 `release-licenses` 与 `pnpm release:check`。
 
 ## 已知技术债
 

@@ -107,6 +107,13 @@ Windows 上 Weasel/RIME 用户的**按需模型预测插件**：用户输入拼�
   决策，终止伴随进程前必须按 `status.json` 的 pid 校验进程映像，校验不过就提示手动退出后重试。
 - **诊断日志（`diagnostics.log`）**：`metadata` 模式只记事件名、状态、耗时、错误码，
   **绝不记正文、拼音、候选或模型回答**。
+- **发布合规 gate**：本仓库自有代码按 **MIT** 授权（`LICENSE`），随产物分发的第三方组件按
+  **构建期从安装树读到的**版本、许可证标识与正文逐条声明（`THIRD-PARTY-NOTICES.md`）；
+  Weasel fork 是 **GPL-3.0-only** 派生物，单独发布并单独提供对应源码与 tag。发布前
+  `pnpm release:check` 必须 `PASS`：缺许可证正文、缺版权声明、缺隐私扫描或 Release notes
+  缺源码义务链接，一律**挡下发布**；结论归档为 `dist/release-archive/release-report.json`。
+  凭据只允许出现在约定槽位 `cloud.api_key`（设置文件里唯一被豁免的字段）：完成通知链路
+  与诊断日志、发布产物对它**零容忍**（ADR 0009）。
 
 ## 领域规则（改代码前先确认）
 
