@@ -42,7 +42,9 @@ if ($existing) { throw "port $Port already in use (pid $($existing.OwningProcess
 $env:OLLAMA_HOST = "127.0.0.1:$Port"
 $env:OLLAMA_MODELS = $ModelsDir
 $env:OLLAMA_KEEP_ALIVE = "60s"
-$proc = Start-Process -FilePath $OllamaExe -ArgumentList "serve" -PassThru -WindowStyle Hidden
+$logOut = Join-Path $cacheDir "private-ollama.out.log"
+$logErr = Join-Path $cacheDir "private-ollama.err.log"
+$proc = Start-Process -FilePath $OllamaExe -ArgumentList "serve" -PassThru -WindowStyle Hidden -RedirectStandardOutput $logOut -RedirectStandardError $logErr
 Set-Content -Path $pidFile -Value $proc.Id
 
 $ready = $false
