@@ -37,11 +37,14 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 - `src/domain/`：`result.ts`、`ids.ts`（品牌 ID）、`error-codes.ts`（全部错误码联合 + 安全码正则）、
   `settings.ts`（设置模型 + 线格式 + `settingsEqual`）、`decision.ts`（决策输入 + 模式判别 + 两个摘要）、
   `generation.ts`（生成模式：词库成员/读音/音节/长度校验）、`syllables.ts`（音节表，评测与生成共用）、
-  `candidate.ts`、`context.ts`（上文快照）、`model.ts`、`secret-keys.ts`、`status.ts`、`cache-limits.ts`。
+  `candidate.ts`、`context.ts`（上文快照）、`model.ts`、`secret-keys.ts`、`status.ts`、`cache-limits.ts`、
+  `install-plan.ts`（安装/卸载/还原的纯决策面：操作清单 + 保留清单）。
 - `src/contracts/`：`policy.ts`（固定策略身份与聊天请求体）、`generation.ts`（生成模式的冻结提示词、采样参数与答案解析）、
   `envelope.ts`（请求信封/响应槽位/就绪标记）、
   `ollama-wire.ts`（外部 JSON 的 zod 边界）。
 - `src/ipc/`：`file-ipc.ts`、`app-paths.ts`；`src/settings/`：`store.ts`、`private-directory.ts`。
+- `src/install/`：`paths.ts`（路径表：R1–R4 的唯一拼装点，见 ADR 0008）、`executor.ts`（执行器薄壳：
+  只执行 `InstallOp`，终止伴随进程前按 `status.json` 的 pid 校验进程映像）。
 - `src/providers/`：`http.ts`、`ollama.ts`、`wire.ts`。
 - `src/inference/`：`service.ts`、`outcome.ts`、`cache.ts`、`queue.ts`、`model-status.ts`、`health.ts`、
   `actions.ts`、`ports.ts`。
@@ -65,6 +68,9 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
   `predictionWire` 决定 Lua 看到的键序。
 - `ModelStatus`（`inference/model-status.ts`）、`SettingsActionReply`（`inference/actions.ts`）、
   `DispatchReply`（`runtime/dispatch.ts`）、`HealthReport`（`inference/health.ts`）。
+- `InstallPlan`/`PayloadTarget`/`EnvironmentSnapshot`（`domain/install-plan.ts`）：安装决策的输入与输出，
+  操作七类 `write | delete | delete-tree | stop-sidecar | register | unregister | guide`。
+- `InstallPaths`/`artifactPaths`（`install/paths.ts`）：角色名到路径的唯一映射（ADR 0008）。
 
 ## 测试地图
 
@@ -88,6 +94,9 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 | `tests/lifecycle.test.ts` | 11 | 单实例锁、空闲释放、启动清理过期瞬态文件（真进程假 sidecar） |
 | `tests/launcher.test.ts` | 8 | 返回码 0/2/3/4/5 与轮询顺序 + selftest 绿灯 |
 | `tests/install-plan.test.ts` | 11 | 安装计划纯函数 |
+| `tests/install-paths.test.ts` | 14 | 路径表 R1–R4、角色映射与非法输入（ADR 0008） |
+| `tests/install-executor.test.ts` | 10 | 执行器：路径稳定排序、失败即停、终止进程的映像守卫 |
+| `tests/install-replay.test.ts` | 6 | 纯快照重放：幂等重装、中断自愈、卸载全清与共享模型保留 |
 | `tests/update-check.test.ts` | 12 | 更新检查只认 stable + 1 小时节流 |
 | `tests/eval-dicts.test.ts` | 9 | 评测词典装载 |
 | `tests/eval-rig.test.ts` | 22 | 评测台架 |
@@ -102,7 +111,7 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 
 ```
 pnpm install
-pnpm verify          # tsc --noEmit ×2 + vitest（415 条：414 通过 + 1 跳过）
+pnpm verify          # tsc --noEmit ×2 + vitest（445 条：444 通过 + 1 跳过）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
 pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
@@ -118,6 +127,7 @@ pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
 - 改提供方 → 跑 `providers`（假 transport，不打真实 Ollama）。
 - 改模式判别、生成校验或生成身份 → 跑 `generation-domain` + `generation-mode` + `lua-filter`（ADR 0007）。
 - 改 Lua 滤镜或它的文件 IPC 端 → 跑 `lua-filter` + `lifecycle`（真 Lua 资产、真 IPC 文件、真子进程；不要引 UI 自动化，见 ADR 0006）。
+- 改安装路径表/安装计划/执行器 → 跑 `install-paths` + `install-plan` + `install-executor` + `install-replay`（ADR 0008）。
 
 ## 已知技术债
 

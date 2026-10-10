@@ -16,6 +16,12 @@
  * 计划里出现的每个路径必然来自快照或目标清单（测试锁死这条不变量）。
  * 共享模型与用户数据（设置、方案、词库）不是自有程序文件：前者只进保留清单，
  * 即便执行器把它的路径误扫进快照，delete 也绝不触及；后者不在扫描范围。
+ *
+ * 除「自有程序文件 + 接入项」之外还有三处路径表注入：transient（卸载终局全清的
+ * 瞬态运行时文件与诊断日志）、preserves（绝不触碰的用户数据，只进保留清单）、
+ * sidecarStop（终止伴随进程所需的状态文件与合法进程映像）。
+ * 旧版设置位置的清理同样是快照驱动：迁移结果由执行器探测成 migrated/blocked，
+ * 本模块只按状态决定删不删（#15 Q4：失败或目标已存在时保留原位置）。
  */
 
 /** TSF 注册现状：定制前端与官方 Weasel 同身份互斥，注册权只在一个前端手里。 */
@@ -31,6 +37,23 @@ export interface EnvironmentSnapshot {
   readonly tsf: TsfState;
   /** 共享模型路径：只出现在保留清单，绝不出现在任何操作里。 */
   readonly sharedModels: readonly string[];
+  /** 旧版设置位置及其迁移结果；缺省 = 本机没有旧位置。 */
+  readonly legacySettings?: LegacySettings;
+  /** 伴随进程当前 pid（由 status.json 读出）；缺省 = 不在场。 */
+  readonly sidecarPid?: number;
+}
+
+/** 旧版设置位置（`%LOCALAPPDATA%\rime-model-predict`）的迁移结果。 */
+export interface LegacySettings {
+  readonly path: string;
+  /** migrated = 设置已成功搬入新用户目录且目标未被占用，可以清理旧位置。 */
+  readonly state: "migrated" | "blocked";
+}
+
+/** 终止伴随进程的契约：读 pid 的状态文件 + 允许被终止的进程映像。 */
+export interface SidecarStopContract {
+  readonly statusFile: string;
+  readonly images: readonly string[];
 }
 
 /** 随包目标工件：path 来自注入的路径表，digest 是载荷的期望摘要。 */
@@ -43,12 +66,24 @@ export interface PayloadArtifact {
 export interface PayloadTarget {
   readonly artifacts: Readonly<Record<string, PayloadArtifact>>;
   readonly frontend: string;
+  /** 卸载终局要清空的瞬态运行时文件与诊断日志；缺省 = 无（旧调用方的行为不变）。 */
+  readonly transient?: readonly string[];
+  /** 绝不触碰的用户数据（设置文件、RIME 用户目录）：只进保留清单。 */
+  readonly preserves?: readonly string[];
+  /** 伴随进程终止契约；缺省 = 卸载不终止任何进程。 */
+  readonly sidecarStop?: SidecarStopContract;
 }
 
-/** 操作清单（spec 原文四类：写/删/注册/还原指引）；unregister 是卸载侧的注册反操作。 */
+/**
+ * 操作清单（spec 原文四类：写/删/注册/还原指引）；unregister 是卸载侧的注册反操作。
+ *
+ * delete-tree 递归删除（瞬态目录用），stop-sidecar 终止伴随进程；五类之外不新开动词。
+ */
 export type InstallOp =
   | { readonly kind: "write"; readonly path: string; readonly digest: string }
   | { readonly kind: "delete"; readonly path: string }
+  | { readonly kind: "delete-tree"; readonly path: string }
+  | { readonly kind: "stop-sidecar"; readonly statusFile: string; readonly images: readonly string[] }
   | { readonly kind: "register"; readonly path: string }
   | { readonly kind: "unregister"; readonly path: string }
   | { readonly kind: "guide"; readonly text: string };
@@ -80,13 +115,17 @@ function sortedPaths(record: Readonly<Record<string, unknown>>): string[] {
   return Object.keys(record).sort();
 }
 
-function planOf(ops: InstallOp[], snapshot: EnvironmentSnapshot): InstallPlan {
-  return { ops, keeps: [...snapshot.sharedModels] };
+function planOf(ops: InstallOp[], snapshot: EnvironmentSnapshot, target: PayloadTarget): InstallPlan {
+  const keeps: string[] = [...snapshot.sharedModels];
+  for (const path of target.preserves ?? []) keeps.push(path);
+  // 迁移失败或目标被占用的旧位置一并保留：卸载不替用户做迁移决定。
+  if (snapshot.legacySettings?.state === "blocked") keeps.push(snapshot.legacySettings.path);
+  return { ops, keeps: [...new Set(keeps)] };
 }
 
 /** 安装/升级：目标齐则空增量（幂等），缺则补写，多余遗留清掉（中断自愈）。 */
 export function planInstall(snapshot: EnvironmentSnapshot, target: PayloadTarget): InstallPlan {
-  const protectedPaths = new Set(snapshot.sharedModels);
+  const protectedPaths = new Set([...snapshot.sharedModels, ...(target.preserves ?? [])]);
   const targetPaths = new Set<string>();
   for (const artifact of Object.values(target.artifacts)) targetPaths.add(artifact.path);
 
@@ -108,6 +147,12 @@ export function planInstall(snapshot: EnvironmentSnapshot, target: PayloadTarget
     }
   }
 
+  // 旧版位置：只有迁移成功且目标未被占用才清理（#15 Q4）；失败或已存在 = 保留原位置。
+  const legacy = snapshot.legacySettings;
+  if (legacy !== undefined && legacy.state === "migrated") {
+    ops.push({ kind: "delete-tree", path: legacy.path });
+  }
+
   // 注册：前端被重写或注册权不在手里时（重）注册；已是我们的且前端未动 = 等价空操作。
   const frontend = target.artifacts[target.frontend];
   if (
@@ -120,24 +165,42 @@ export function planInstall(snapshot: EnvironmentSnapshot, target: PayloadTarget
   // 还原指引：只有替换了一个在场的官方前端才需要。
   if (snapshot.tsf === "official") ops.push({ kind: "guide", text: restoreGuide() });
 
-  return planOf(ops, snapshot);
+  return planOf(ops, snapshot, target);
 }
 
-/** 卸载：反注册 → 全清自有文件（含遗留垃圾）→ 还原指引；共享模型只进保留清单。 */
+/**
+ * 卸载：反注册 → 终止伴随进程 → 删自有程序文件与接入项 → 清瞬态与诊断日志 → 还原指引
+ * （#15 的固定序）。保留清单里的用户数据与共享模型不出现在任何删除操作里；
+ * 已消失的文件不在快照里，重跑自然幂等。
+ */
 export function planUninstall(snapshot: EnvironmentSnapshot, target: PayloadTarget): InstallPlan {
-  const protectedPaths = new Set(snapshot.sharedModels);
+  const protectedPaths = new Set([...snapshot.sharedModels, ...(target.preserves ?? [])]);
   const ops: InstallOp[] = [];
 
+  // 1) 反注册 TSF：注册权在我们手里才需要交还。
   const frontend = target.artifacts[target.frontend];
   if (snapshot.tsf === "ours" && frontend !== undefined) {
     ops.push({ kind: "unregister", path: frontend.path });
   }
 
+  // 2) 终止伴随进程：有 pid 且路径表给出终止契约才出这一步；执行器必须校验进程映像。
+  const sidecarStop = target.sidecarStop;
+  const pid = snapshot.sidecarPid;
+  if (sidecarStop !== undefined && pid !== undefined && Number.isInteger(pid) && pid > 0) {
+    ops.push({ kind: "stop-sidecar", statusFile: sidecarStop.statusFile, images: [...sidecarStop.images] });
+  }
+
+  // 3) 删自有程序文件与明确接入项（含遗留垃圾）。
   for (const path of sortedPaths(snapshot.files)) {
     if (!protectedPaths.has(path)) ops.push({ kind: "delete", path });
   }
 
+  // 4) 清瞬态运行时文件与诊断日志：组内按路径升序，重跑跳过已消失项。
+  for (const path of [...(target.transient ?? [])].sort()) {
+    ops.push({ kind: "delete-tree", path });
+  }
+
   if (snapshot.tsf === "ours") ops.push({ kind: "guide", text: restoreGuide() });
 
-  return planOf(ops, snapshot);
+  return planOf(ops, snapshot, target);
 }

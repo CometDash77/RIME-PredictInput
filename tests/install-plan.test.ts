@@ -175,7 +175,9 @@ describe("还原指引与路径不变量", () => {
       for (const plan of [planInstall(snap, TARGET), planUninstall(snap, TARGET)]) {
         for (const op of plan.ops) {
           if (op.kind === "guide") continue;
-          if (op.kind === "write" || op.kind === "delete") {
+          // 终止契约的 statusFile 由目标清单注入，这些场景不注入；见安装重放测试。
+          if (op.kind === "stop-sidecar") continue;
+          if (op.kind === "write" || op.kind === "delete" || op.kind === "delete-tree") {
             expect(plan.keeps).not.toContain(op.path);
           }
           expect(known.has(op.path) || scenario.files[op.path] !== undefined).toBe(true);
