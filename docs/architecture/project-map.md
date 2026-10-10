@@ -9,6 +9,7 @@
 | 自检 | `dist/cli/main.js selftest` | 7 项离线边界检查，临时目录里跑，不碰真实用户目录 |
 | 随包产物 | `build/exe/rime-predict-sidecar.exe`（`pnpm build:exe`） | 单文件形态（@yao-pkg/pkg）：预测泵 + selftest；无 settings 入口（CJS `import.meta.url` 限制，ADR 0003） |
 | 设置页资产 | `assets/settings.html` | `__NONCE__` 在响应时替换 |
+| Lua 滤镜资产 | `assets/lua/*.lua` | 真机由 RIME 装载；测试用 wasmoon 执行同一批文件（ADR 0006） |
 
 ## 分层与数据流
 
@@ -46,6 +47,8 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
   `child-process.ts`、`clock.ts`。
 - `src/web/`：`settings-host.ts`、`safe-metadata.ts`、`launcher.ts`、`native-alert.ts`。
 - `src/cli/`：`main.ts`、`selftest.ts`。
+- `assets/lua/`：`model_predict_host.lua`（io/os/启动器端口）、`model_predict_json.lua`（与旧实现逐字节相同）、
+  `model_predict_ipc.lua`（请求/响应文件契约，含 contract_version 门控）、`model_predict_filter.lua`（滤镜主体，把有效结果插进第 5 槽位）。
 
 ## 核心类型（改这些要先看消费者）
 
@@ -66,14 +69,24 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 | `tests/oracle-policy.test.ts` | 8 | 策略摘要/身份/验收证据/聊天请求体逐字段一致 |
 | `tests/oracle-decision.test.ts` | 22 | 决策输入 21 条载荷 + 两个摘要 |
 | `tests/oracle-settings.test.ts` | 26 | 设置 26 条映射与线格式全等 |
-| `tests/oracle-requests.test.ts` | 19 | 请求信封 18 条 + 逐字节重编码 |
-| `tests/oracle-ipc.test.ts` | 5 | 请求/响应文件字节、槽位语义、消费、小数时间戳 |
+| `tests/oracle-requests.test.ts` | 23 | 请求信封逐字段 + 逐字节重编码 + 契约版本门控 |
+| `tests/oracle-ipc.test.ts` | 7 | 请求/响应文件字节、槽位语义、消费、小数时间戳、contract_version 与 60 秒过期门控 |
 | `tests/settings-store.test.ts` | 9 | 设置文件字节、不覆盖写、迁移只搬一次 |
+| `tests/settings-channels.test.ts` | 31 | 设置页各通道的读写与拒绝路径 |
+| `tests/settings-host.test.ts` | 22 | 回环约束、令牌、CSP/nonce、过滤与错误文案 |
 | `tests/providers.test.ts` | 32 | HTTP 映射、探活、清单、`ps` 归属、choice 校验、拉取、卸模 |
+| `tests/cloud-channels.test.ts` | 33 | 四类云端通道的请求体、错误码与凭据边界 |
 | `tests/inference.test.ts` | 48 | 46 条旧行为快照 + 缓存/router/状态/动作 |
 | `tests/runtime.test.ts` | 17 | 13 个请求泵场景 + 2 个运行循环 + 构造期回落 |
-| `tests/settings-host.test.ts` | 16 | 回环约束、令牌、CSP/nonce、过滤与错误文案 |
+| `tests/lua-filter.test.ts` | 13 | 真 Lua 滤镜 + 真文件 IPC：请求组装、a/b 槽位、消费即删、失败留空、过期作废、第 5 槽位 |
+| `tests/lifecycle.test.ts` | 11 | 单实例锁、空闲释放、启动清理过期瞬态文件（真进程假 sidecar） |
 | `tests/launcher.test.ts` | 8 | 返回码 0/2/3/4/5 与轮询顺序 + selftest 绿灯 |
+| `tests/install-plan.test.ts` | 11 | 安装计划纯函数 |
+| `tests/update-check.test.ts` | 12 | 更新检查只认 stable + 1 小时节流 |
+| `tests/eval-dicts.test.ts` | 9 | 评测词典装载 |
+| `tests/eval-rig.test.ts` | 22 | 评测台架 |
+| `tests/eval-syllables.test.ts` | 11 | 音节切分 |
+| `tests/weasel-messenger-koffi.test.ts` | 3（+1 跳过） | koffi 窗口消息；没有真 WeaselServer 时跳过窗口级用例 |
 
 快照文件 `tests/fixtures/oracle.json` 由 `pnpm fixtures` 从旧实现重新生成；
 `tests/support/oracle.ts` 用 zod 把它解析成类型，`tests/support/json.ts` 负责把
@@ -83,7 +96,7 @@ Weasel/RIME ──文件 IPC──▶ src/ipc/file-ipc.ts ──▶ src/runtime/
 
 ```
 pnpm install
-pnpm verify          # tsc --noEmit ×2 + vitest（354 条）
+pnpm verify          # tsc --noEmit ×2 + vitest（378 条）
 pnpm build           # tsc -p tsconfig.json
 pnpm selftest        # 需要先 build
 pnpm build:exe       # tsc + 单文件 exe（@yao-pkg/pkg，CUI+GUI 变体，selftest 等价 smoke 内建；见 ADR 0003）
@@ -97,6 +110,7 @@ pnpm fixtures        # 可选：重放旧实现生成快照（需要 Python）
 - 改设置字段 → 跑 `oracle-settings` + `settings-store` + `settings-host`。
 - 改请求泵/状态文件/日志 → 跑 `runtime`。
 - 改提供方 → 跑 `providers`（假 transport，不打真实 Ollama）。
+- 改 Lua 滤镜或它的文件 IPC 端 → 跑 `lua-filter` + `lifecycle`（真 Lua 资产、真 IPC 文件、真子进程；不要引 UI 自动化，见 ADR 0006）。
 
 ## 已知技术债
 
