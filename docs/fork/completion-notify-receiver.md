@@ -102,17 +102,21 @@ S3 不新增管道枚举命令：刷新路径完全在服务端（COPYDATA → �
 - **发送端↔接收端字节契约交叉验证**（2026-10-09，本会话）：以真实 TS 发送端
   （`completionPayload` + 终止 NUL）逐字节喂入 C++ 解析语法的 JS 镜像——全部一致
   （常量、三段语法、大小写、seq 上界、malformed 矩阵）。
-- **编译 + 测试运行（待构建机）**：本会话所在 dev 机无 MSVC 工具链（fork CI 因
-  workflow 文件不在默认分支从未注册，编译验证归构建机）。构建机（按
-  `build-and-release.md` §2/§3 前置）执行：
+- **编译 + 测试运行（2026-10-10 已在本机 dev 机实测通过）**：dev 机实有 VS2019 BuildTools（`C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe`，vswhere 仅此一处安装）；fork CI 因
+  workflow 文件不在默认分支从未注册。另一台机器复跑时按
+  `build-and-release.md` §2/§3 前置后执行：
 
   ```
   git clone -b predict-0.17.4 --single-branch https://github.com/CometDash77/weasel
   cd weasel && copy env.vs2019.bat env.bat && REM BOOST_ROOT 指向 boost 1.84.0
   REM get-rime.ps1 -tag 1.13.1 -use dev 后：
-  msbuild weasel.sln /p:Configuration=Release /p:Platform=x64
-  msbuild\Release\x64\TestPredictNotify.exe   REM 期望输出 all checks passed，退出码 0
+  MSBuild.exe weasel.sln /p:Configuration=Release /p:Platform=x64 /t:TestPredictNotify /m /v:m /nologo   REM exit 0
+  x64\Release\TestPredictNotify.exe   REM 实测 exit 0，stdout: TestPredictNotify: all checks passed
   ```
+
+  - 产物目录是 `x64\Release\`（vcxproj 的 OutDir），不是 `msbuild\Release\x64\`。
+  - **真 WeaselServer 在场时窗口级用例按设计跳过**：打印 `SKIP: single-instance mutex held (a real WeaselServer is running); window-level cases skipped.` 后仍退 0，只跑纯解析用例。要跑满须先停掉已安装的 `C:\Program Files\Rime\weasel-0.17.4\WeaselServer.exe`（释放单实例互斥体），跑完再启回；2026-10-10 按此法实测窗口级用例全绿。
+  - HEAD 需含 `d7f2496`（`SendRaw` 前向声明），否则整个 solution build 在 `test/TestPredictNotify/TestPredictNotify.cpp` 上 C3861 失败。
 
 - **真实 Weasel 互操作**（sidecar→fork 窗口、候选窗免按键刷新）归真机发布验收
   （#16 / release gate），按票面不进自动化。
