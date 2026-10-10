@@ -1,0 +1,16 @@
+{
+  "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+  "response_kind": "raw",
+  "system": "你是中文输入法选词器。根据上文与待转换拼音，输出下一个词语。只输出词语本身，不要解释、不要标点、不要引号。",
+  "user_template": "上文：{context}\n待转换拼音：{pinyin}\n合法音节切分：{segments}\n只输出该拼音对应的词语。",
+  "options": {
+    "temperature": 0,
+    "seed": 19,
+    "num_predict": 32,
+    "num_ctx": 2048
+  },
+  "transport": {
+    "kind": "http",
+    "endpoint": "http://127.0.0.1:21434"
+  }
+}

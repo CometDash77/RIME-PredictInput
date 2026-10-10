@@ -79,6 +79,11 @@ export async function runSelftest(): Promise<number> {
     await check(checks, "runtime rejects a malformed request envelope", () => {
       const parsed = parseRequest(new TextEncoder().encode('{"version":9}'));
       assert(isErr(parsed) && parsed.error === "unsupported request envelope", "bad envelope accepted");
+      const missingContract = parseRequest(new TextEncoder().encode('{"version":1}'));
+      assert(
+        isErr(missingContract) && missingContract.error === "unsupported request envelope",
+        "envelope without contract version accepted",
+      );
     });
 
     let tick = 0;

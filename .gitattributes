@@ -6,3 +6,7 @@
 *.html text eol=lf
 *.ps1 text eol=crlf
 *.c text eol=lf
+# 评测冻结资产必须保持 LF 字节：样本哈希按 LF 内容计算，换行转换会破坏冻结校验
+eval/holdout/samples.jsonl -text
+eval/holdout/manifest.json -text
+eval/fixtures/*.json -text

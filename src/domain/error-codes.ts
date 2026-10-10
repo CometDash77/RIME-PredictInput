@@ -26,7 +26,17 @@ export type SettingsErrorCode =
   | "threshold identity is invalid"
   | "threshold must be a finite number between zero and one"
   | "secrets are not supported in local settings"
-  | "settings file is too large";
+  | "settings file is too large"
+  | "cloud_enabled must be a boolean"
+  | "update_check_enabled must be a boolean"
+  | "local_base_url must be a valid http(s) URL"
+  | "cloud must be an object with kind, model, api_key and base_url"
+  | "cloud kind must be openai-responses, openai-chat, anthropic or custom"
+  | "cloud model is invalid"
+  | "cloud api_key must be a short string"
+  | "cloud base_url must be a valid http(s) URL"
+  | "custom channel requires base_url"
+  | "base_url is only supported by the custom channel";
 
 /**
  * Only `SettingsStore` produces these. `settings file is unreadable` covers the

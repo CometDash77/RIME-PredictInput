@@ -11,9 +11,15 @@ import { pathToFileURL } from "node:url";
 
 import { InferenceService } from "../inference/service.js";
 import { appPathsForUser } from "../ipc/app-paths.js";
+import { FetchTransport } from "../providers/http.js";
 import { LocalBackend } from "../providers/ollama.js";
+import { CloudBackend } from "../providers/cloud.js";
+import { SIDECAR_VERSION, UpdateChecker } from "../providers/update.js";
+import { monotonicSeconds } from "../runtime/clock.js";
+import { messengerCompletionNotifier } from "../runtime/completion-notify.js";
 import { SingleInstance, SIDECAR_LOCK_FILE } from "../runtime/lifecycle.js";
 import { SidecarRuntime } from "../runtime/runtime.js";
+import { createWeaselWindowMessenger } from "../runtime/weasel-messenger-koffi.js";
 import { migrateLegacySettings } from "../settings/store.js";
 import { openSettingsSession } from "../web/launcher.js";
 import { SettingsWebHost } from "../web/settings-host.js";
@@ -85,17 +91,29 @@ export async function runSidecar(args: CliArgs): Promise<number> {
   let runtime: SidecarRuntime | null = null;
   let settingsWeb: SettingsWebHost | null = null;
   try {
-    const service = new InferenceService({ local: new LocalBackend() });
+    // 双通道推理端口（spec #10）：本地 Ollama/兼容端点 + 云端四形态，同一决策契约。
+    const service = new InferenceService({ local: new LocalBackend(), cloud: new CloudBackend() });
     inference = service;
+    // 完成通知（ADR 0001）：Windows + koffi 就绪时恢复旧行为（预测落盘即刻刷新
+    // 候选窗），否则保持「等下一次按键」的降级表现。
+    const messenger = createWeaselWindowMessenger();
     const host = new SidecarRuntime({
       paths,
       dispatch: (request, settings) => service.submit(request, settings),
       idleSeconds: args.idleSeconds,
+      ...(messenger === null ? {} : { completionNotify: messengerCompletionNotifier(messenger) }),
     });
     runtime = host;
     settingsWeb = new SettingsWebHost({
       inference: service,
       runtime: host,
+      // 更新检查（spec #10）：只在设置页会话读取时出站（进程内节流），
+      // sidecar 冷启动与普通输入零网络；开关关闭时 host 完全不询问。
+      updates: new UpdateChecker({
+        transport: new FetchTransport(),
+        now: monotonicSeconds,
+        currentVersion: SIDECAR_VERSION,
+      }),
       initialToken: args.source === "settings" ? args.token : null,
     });
     try {

@@ -1,0 +1,16 @@
+{
+  "model": "hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M",
+  "response_kind": "raw",
+  "system": "你是中文输入法选词器。根据上文与待转换拼音，输出下一个词语。只输出词语本身，不要解释、不要标点、不要引号。\n示例：上文「口渴的他拧开一瓶冰镇」拼音「qishui」→ 汽水\n示例：上文「考古队在沙漠深处发现了一处」拼音「yiji」→ 遗迹\n示例：上文「他做事总是半途而废，缺少」拼音「chizhiyiheng」→ 持之以恒\n示例：上文「巷口新开的小店招牌写着」拼音「maoyuwu」→ 猫语屋\n输出格式硬约束：输出必须全部为汉字（U+4E00 到 U+9FFF）；总长 1 到 12 个汉字；每个字的读音必须能与拼音的某种合法音节切分逐字对应；无法满足时输出空。",
+  "user_template": "上文：{context}\n待转换拼音：{pinyin}\n合法音节切分：{segments}\n只输出该拼音对应的词语。",
+  "options": {
+    "temperature": 0,
+    "seed": 19,
+    "num_predict": 32,
+    "num_ctx": 2048
+  },
+  "transport": {
+    "kind": "http",
+    "endpoint": "http://127.0.0.1:21434"
+  }
+}

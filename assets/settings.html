@@ -31,6 +31,7 @@
 
   <section class="card">
     <h2>总览</h2>
+    <p id="updateLine" class="note hidden"></p>
     <div class="row"><label for="enabled">启用模型预测</label><input id="enabled" type="checkbox"></div>
     <div class="grid" id="overview"></div>
   </section>
@@ -45,9 +46,21 @@
     <div class="grid" id="modelStatus" aria-live="polite"></div>
   </section>
 
+  <section class="card" id="cloudCard">
+    <h2>云端通道</h2>
+    <div class="row"><label for="cloudEnabled">启用云端通道</label><input id="cloudEnabled" type="checkbox"></div>
+    <p class="note">开启云端通道后，编辑器正文（上文）、本次拼音与本地候选列表将发送到你配置的服务商；插件不会保存这些内容。云端通道默认关闭，不开启就绝不联网预测。</p>
+    <div class="row hidden" data-cloud-field><label for="cloudKind">服务商接口</label><select id="cloudKind"><option value="">请选择</option><option value="openai-responses">OpenAI Responses</option><option value="openai-chat">OpenAI Chat Completions</option><option value="anthropic">Anthropic Messages</option><option value="custom">自定义（OpenAI 兼容端点）</option></select></div>
+    <div class="row hidden" data-cloud-field><label for="cloudModel">云端模型</label><input id="cloudModel" type="text" maxlength="80" autocomplete="off"></div>
+    <div class="row hidden" data-cloud-field><label for="cloudApiKey">API 密钥</label><input id="cloudApiKey" type="password" autocomplete="new-password"></div>
+    <div class="row hidden" id="cloudBaseUrlRow"><label for="cloudBaseUrl">接口地址</label><input id="cloudBaseUrl" type="text" placeholder="https://example.example/v1" autocomplete="off"></div>
+    <p class="note hidden" data-cloud-field>官方接口的地址由插件固定，密钥只发往对应官方源；自定义通道走 OpenAI Chat 兼容格式，地址需自带版本段（如 /v1）。密钥保存在本机设置文件，不进诊断日志。</p>
+  </section>
+
   <section class="card">
     <h2>行为与隐私</h2>
     <div class="row"><label for="slot">插入位置（全候选流）</label><input id="slot" type="number" min="1" step="1"><span class="note">默认 5；可位于后续页。</span></div>
+    <div class="row"><label for="updateCheck">自动检查更新</label><input id="updateCheck" type="checkbox" checked><span class="note">匿名查询 GitHub 是否有新版本，不含任何输入内容；发现新版本时在总览处给出发布页链接，下载安装永远由你手动完成。</span></div>
     <div class="row"><label for="wait">停输入触发延迟</label><input id="wait" type="number" min="1" max="200" step="1"><span>毫秒（最多 200）</span></div>
     <div class="row"><label for="logMode">诊断日志</label><select id="logMode"><option value="off">关闭</option><option value="metadata">仅元数据</option></select></div>
     <div class="row"><button id="save" class="primary">保存全部设置</button><button id="clearCache">清除内存缓存</button></div>
@@ -77,16 +90,31 @@
       return payload;
     };
     const statusLabel = value => ({ready:"运行中",busy:"处理中",starting:"启动中",stopped:"已停止",connected:"已连接",available:"可用",unavailable:"不可用",ok:"成功",pending:"处理中",pulling:"正在安装",installed:"已安装",cancelled:"已取消",not_installed:"未安装",unverified:"未验证",failed:"未通过（历史筛选）",accepted:"已验收（独立筛选）",selected:"已提交选择",timeout:"超时",idle:"暂无请求",unknown:"未知"}[value]||"未知");
-    const validationErrors = {"slot must be a positive integer":"插入位置必须是正整数。", "local_wait_ms must be between 1 and 200":"停输入触发延迟必须是 1 到 200 毫秒的整数。", "local_model is invalid":"模型名称格式无效。"};
+    const validationErrors = {"slot must be a positive integer":"插入位置必须是正整数。", "local_wait_ms must be between 1 and 200":"停输入触发延迟必须是 1 到 200 毫秒的整数。", "local_model is invalid":"模型名称格式无效。", "cloud kind must be openai-responses, openai-chat, anthropic or custom":"云端服务商接口无效。", "cloud model is invalid":"云端模型名称格式无效。", "cloud api_key must be a short string":"API 密钥格式无效。", "cloud base_url must be a valid http(s) URL":"接口地址必须是有效的 http(s) 地址。", "custom channel requires base_url":"自定义通道需要填写接口地址。", "base_url is only supported by the custom channel":"只有自定义通道可以修改接口地址。", "cloud must be an object with kind, model, api_key and base_url":"云端通道配置不完整。", "cloud_enabled must be a boolean":"云端开关无效。"};
     const errorLabel = value => ({ollama_missing:"未找到 Ollama，请先安装 Ollama。",ollama_start_failed:"Ollama 启动失败。",local_unavailable:"本地服务不可用。",local_auth_required:"本地 Ollama 要求认证，暂无法使用。",model_missing:"模型尚未安装。",model_store_unavailable:"无法读取模型库存。",model_version_unavailable:"无法核对模型完整版本。",identity_not_validated:"此模型与当前策略尚未验收，继续使用普通候选。",model_ownership_unavailable:"无法核对模型占用状态。",invalid_model_response:"模型响应无效，继续使用普通候选。",invalid_model_list:"模型列表格式无效。",network_unavailable:"无法连接本地服务。",timeout:"连接超时。",pull_in_progress:"已有安装任务正在运行。",pull_start_failed:"无法启动模型安装。",pull_failed:"模型安装失败，请检查模型名称和网络。",pull_cancel_failed:"取消安装失败，请重试。",invalid_model_name:"模型名称格式无效。",settings_save_failed:"设置保存失败。",session_expired:"设置会话已过期。",operation_unavailable:"操作暂时不可用。",status_unavailable:"无法读取服务状态。",disabled:"模型预测已关闭。",sidecar_stopping:"伴随进程正在退出。",local_only:"首版仅支持本地 Ollama。",invalid_request:"请求无效。",request_failed:"请求失败。",invalid_json:"请求格式无效。",provider_unavailable:"Ollama 服务暂时不可用。",provider_rejected:"Ollama 拒绝此请求。",provider_error:"Ollama 返回错误。",provider_overloaded:"Ollama 服务繁忙。",model_unavailable:"Ollama 未找到此模型。",unauthorized:"Ollama 认证失败。",forbidden:"Ollama 拒绝访问。",rate_limited:"请求过于频繁。",redirect_refused:"本地服务返回了不允许的跳转。",response_too_large:"服务响应过大。"}[value]||validationErrors[value]||"操作失败，请检查本地服务或重新打开设置页。");
     const metrics = (id, items) => { $(id).replaceChildren(); items.forEach(([title,value])=>{const d=document.createElement("div");d.className="metric";const b=document.createElement("strong");b.textContent=title;const s=document.createElement("span");s.textContent=value;d.append(b,s);$(id).append(d);}); };
+    const syncCloudRows = () => { const on=$("cloudEnabled").checked; document.querySelectorAll("[data-cloud-field]").forEach(el=>el.classList.toggle("hidden",!on)); $("cloudBaseUrlRow").classList.toggle("hidden",!on||$("cloudKind").value!=="custom"); };
+    $("cloudEnabled").addEventListener("change",syncCloudRows); $("cloudKind").addEventListener("change",syncCloudRows);
+    const renderUpdate = update => {
+      const el=$("updateLine"); el.replaceChildren();
+      if(!update||update.kind==="unavailable"){el.classList.add("hidden");return;}
+      if(update.kind==="update-available"){
+        // 页面是最后一道防线：tag 与链接必须仍是域层约束的形状，否则静默。
+        if(typeof update.url!=="string"||!/^https:\/\/github\.com\//.test(update.url)||typeof update.tag!=="string"||!/^v?\d+\.\d+\.\d+$/.test(update.tag)){el.classList.add("hidden");return;}
+        el.append("发现新版本 "+update.tag+"：");
+        const a=document.createElement("a"); a.href=update.url; a.target="_blank"; a.rel="noopener noreferrer"; a.textContent="前往发布页下载";
+        el.append(a); el.classList.remove("hidden");
+      } else { el.textContent="当前已是最新版本。"; el.classList.remove("hidden"); }
+    };
     const renderModel = model => { if(ending)return; metrics("modelStatus", [["验收状态",statusLabel(model.status)], ["模型身份",model.model_identity||"尚无法核对"], ["思考模式","关闭"], ["模型来源",model.source||"尚无来源证据"], ["中文质量",model.quality||"尚无独立验收结果"], ["检查结果",model.error_code?errorLabel(model.error_code):model.eligible?"允许默认关闭试用；日常人工验收待完成。":"继续使用普通候选。"]]); };
     const loadModelStatus = async () => { const revision=++modelRevision, model=$("model").value.trim(); $("modelStatus").textContent="正在核对模型身份…"; try { const r=await request("/api/action","POST",{action:"model_status",model}); if(!ending&&revision===modelRevision)renderModel(r); } catch(e) { if(!ending&&revision===modelRevision)$("modelStatus").textContent=errorLabel(e.message); } };
     const renderStatus = data => {
       const h=data.health||{}, local=h.local||{}, last=h.last_inference||{};
       if(h.selected_model?.model===$("model").value.trim())renderModel(h.selected_model);
       const duration=Number.isFinite(last.duration_ms)&&last.duration_ms>=0?`${last.duration_ms.toFixed(1)} 毫秒`:"暂无请求";
-      metrics("overview", [["伴随进程",statusLabel(data.sidecar.state)], ["本地服务",local.error_code?errorLabel(local.error_code):statusLabel(local.status)], ["当前模式","本地 Ollama"], ["最近请求",statusLabel(last.status)], ["最近推理耗时",duration]]);
+      const cloudOn=data.settings&&data.settings.cloud_enabled===true;
+      metrics("overview", [["伴随进程",statusLabel(data.sidecar.state)], ["本地服务",local.error_code?errorLabel(local.error_code):statusLabel(local.status)], ["当前模式",cloudOn?"云端通道已启用":"本地 Ollama"], ["最近请求",statusLabel(last.status)], ["最近推理耗时",duration]]);
+      renderUpdate(data.update);
       const adopted=typeof last.adopted==="boolean"?(last.adopted?"已采纳模型预测":"选择了普通候选"):"暂无选择记录";
       const items=[["伴随进程",statusLabel(data.sidecar.state)], ["最近结果",statusLabel(last.status)], ["耗时",duration], ["错误",last.error_code?errorLabel(last.error_code):"无"], ["后端",last.backend||"—"], ["服务商",last.provider||"—"], ["是否采纳",adopted]];
       $("recent").replaceChildren(); items.forEach(([title,value])=>{const d=document.createElement("div");d.className="metric";const b=document.createElement("strong");b.textContent=title;const s=document.createElement("span");s.textContent=value;d.append(b,s);$("recent").append(d);});
@@ -95,6 +123,11 @@
       if(ending)return;
       settings=data.settings;
       $("enabled").checked=settings.enabled; $("model").value=settings.local_model; $("slot").value=settings.slot; $("wait").value=settings.local_wait_ms; $("logMode").value=settings.log_mode;
+      const cloud=settings.cloud||null;
+      $("cloudEnabled").checked=settings.cloud_enabled===true;
+      $("cloudKind").value=cloud?cloud.kind:""; $("cloudModel").value=cloud?cloud.model:""; $("cloudApiKey").value=cloud?cloud.api_key:""; $("cloudBaseUrl").value=cloud&&cloud.base_url?cloud.base_url:"";
+      $("updateCheck").checked=settings.update_check_enabled!==false;
+      syncCloudRows();
       renderStatus(data);
       notice("设置已读取。",true);
     };
@@ -104,7 +137,22 @@
     $("model").addEventListener("input",()=>{modelRevision++;$("modelStatus").textContent="模型名称已更改，等待核对。";});
     $("model").addEventListener("change",loadModelStatus);
     $("models").addEventListener("click",loadModels); $("refresh").addEventListener("click",load);
-    $("save").addEventListener("click",async()=>{try{const body={...settings,enabled:$("enabled").checked,backend:"local",local_model:$("model").value.trim(),provider:null,slot:Number($("slot").value),local_wait_ms:Number($("wait").value),log_mode:$("logMode").value};const r=await request("/api/settings","POST",body);if(r.status==="ok"){settings=body;notice("已保存；后续输入立即采用新设置。",true);}}catch(e){notice(errorLabel(e.message),false);}});
+    $("save").addEventListener("click",async()=>{try{
+      const cloudOn=$("cloudEnabled").checked;
+      let cloud;
+      if(cloudOn){
+        const kind=$("cloudKind").value,model=$("cloudModel").value.trim(),key=$("cloudApiKey").value,base=$("cloudBaseUrl").value.trim();
+        if(!kind)return notice("请选择云端服务商接口。",false);
+        if(!model)return notice("请填写云端模型名称。",false);
+        if(!key)return notice("请填写 API 密钥。",false);
+        if(kind==="custom"&&!base)return notice("自定义通道需要填写接口地址。",false);
+        cloud={kind,model,api_key:key,base_url:kind==="custom"?base:null};
+      } else { cloud=settings&&settings.cloud?settings.cloud:null; }
+      const body={...settings,enabled:$("enabled").checked,backend:"local",local_model:$("model").value.trim(),provider:null,slot:Number($("slot").value),local_wait_ms:Number($("wait").value),log_mode:$("logMode").value,cloud_enabled:cloudOn,cloud};
+      if($("updateCheck").checked) delete body.update_check_enabled; else body.update_check_enabled=false;
+      const r=await request("/api/settings","POST",body);
+      if(r.status==="ok"){settings=body;notice("已保存；后续输入立即采用新设置。",true);}
+    }catch(e){notice(errorLabel(e.message),false);}});
     $("pull").addEventListener("click",async()=>{const model=$("model").value.trim();if(!model)return notice("请先填写模型名称。",false);if(!confirm(`现在从 Ollama 拉取模型 ${model}？这会下载模型文件并占用网络与磁盘。`))return;$("pull").disabled=true;try{const r=await request("/api/action","POST",{action:"pull_model",model});if(ending)return;renderPull(r);if(r.status==="pulling")pollPull();}catch(e){if(!ending){$("pull").disabled=false;$("localStatus").textContent=errorLabel(e.message);}}});
     function renderPull(r){if(ending)return;const active=r.status==="pulling"||r.error_code==="pull_cancel_failed";$("pull").disabled=active;$("cancelPull").disabled=!active;$("localStatus").textContent=r.status==="pulling"?`正在安装 ${r.model}…`:r.status==="installed"?`${r.model} 安装完成。`:r.status==="cancelled"?"安装已取消；已下载的文件由 Ollama 管理。":r.error_code?errorLabel(r.error_code):"暂无安装任务";}
     async function pollPull(){clearTimeout(pullTimer);if(ending)return;try{const r=await request("/api/action","POST",{action:"pull_status"});if(ending)return;renderPull(r);if(r.status==="pulling")pullTimer=setTimeout(pollPull,2000);else if(r.status==="installed"){await loadModels();await loadModelStatus();}}catch(e){if(!ending)$("localStatus").textContent=errorLabel(e.message);}}

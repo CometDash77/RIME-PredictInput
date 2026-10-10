@@ -15,6 +15,9 @@ import { findSecretKey as findForbiddenKey } from "../domain/secret-keys.js";
 import { sha256Hex } from "../json/digest.js";
 
 export const PROTOCOL_VERSION = 1;
+/** Frozen version of the request/response file contract. */
+export const CONTRACT_VERSION = 1;
+export const RESPONSE_MAX_AGE_SECONDS = 60;
 export const MAX_MESSAGE_BYTES = 256 * 1024;
 
 /** 凭据键名清单只在 domain/secret-keys.ts 维护；IPC 与设置页共用同一份。 */
@@ -53,6 +56,7 @@ export function messageBytes(value: JsonValue): Result<Uint8Array, ProtocolError
 
 export interface RequestEnvelope {
   readonly version: typeof PROTOCOL_VERSION;
+  readonly contractVersion: typeof CONTRACT_VERSION;
   readonly engineId: EngineId;
   readonly seq: Sequence;
   readonly requestId: RequestId;
@@ -81,6 +85,9 @@ export function parseRequest(raw: Uint8Array): Result<RequestEnvelope, ProtocolE
   if (!isJsonObject(value) || value["version"] !== PROTOCOL_VERSION) {
     return err("unsupported request envelope");
   }
+  if (value["contract_version"] !== CONTRACT_VERSION) {
+    return err("unsupported request envelope");
+  }
   const engine = value["engine_id"];
   if (typeof engine !== "string" || !ENGINE_ID_PATTERN.test(engine)) return err("invalid engine id");
   const rawSeq = value["seq"];
@@ -100,6 +107,7 @@ export function parseRequest(raw: Uint8Array): Result<RequestEnvelope, ProtocolE
 
   return ok({
     version: PROTOCOL_VERSION,
+    contractVersion: CONTRACT_VERSION,
     engineId: engine as EngineId,
     seq: rawSeq as Sequence,
     requestId: rawRequestId as RequestId,
@@ -113,6 +121,7 @@ export function parseRequest(raw: Uint8Array): Result<RequestEnvelope, ProtocolE
 export function requestWire(envelope: RequestEnvelope): JsonObject {
   return {
     version: envelope.version,
+    contract_version: envelope.contractVersion,
     engine_id: envelope.engineId,
     seq: envelope.seq,
     request_id: envelope.requestId,
@@ -132,7 +141,8 @@ export function responseSlotFor(seq: number): ResponseSlot {
 }
 
 export interface ResponseRecord {
-  readonly version: number;
+  readonly version: typeof PROTOCOL_VERSION;
+  readonly contractVersion: typeof CONTRACT_VERSION;
   readonly engineId: EngineId;
   readonly seq: Sequence;
   readonly requestId: RequestId | null;
@@ -182,6 +192,7 @@ export function parseResponseRecord(
   marker: ReadyMarker,
   body: Uint8Array,
   engineId: EngineId,
+  now: number = Date.now() / 1000,
 ): ResponseRecord | null {
   if (body.byteLength !== marker.bytes) return null;
   if (sha256Hex(body) !== marker.sha256) return null;
@@ -193,6 +204,7 @@ export function parseResponseRecord(
   }
   if (!isJsonObject(value)) return null;
   if (value["version"] !== PROTOCOL_VERSION) return null;
+  if (value["contract_version"] !== CONTRACT_VERSION) return null;
   if (value["engine_id"] !== engineId) return null;
   if (value["seq"] !== marker.seq) return null;
   const payload = value["payload"];
@@ -201,8 +213,12 @@ export function parseResponseRecord(
   if (!secrets.ok) return null;
   const requestId = value["request_id"];
   const createdAt = value["created_at"];
+  if (typeof createdAt !== "number" || !Number.isFinite(createdAt) || createdAt > now + 1 || now - createdAt > RESPONSE_MAX_AGE_SECONDS) {
+    return null;
+  }
   return {
     version: PROTOCOL_VERSION,
+    contractVersion: CONTRACT_VERSION,
     engineId,
     seq: marker.seq as Sequence,
     requestId: typeof requestId === "string" && REQUEST_ID_PATTERN.test(requestId) ? (requestId as RequestId) : null,
@@ -222,6 +238,7 @@ export function responseWire(input: {
 }): JsonObject {
   return {
     version: PROTOCOL_VERSION,
+    contract_version: CONTRACT_VERSION,
     engine_id: input.engineId,
     seq: input.seq,
     request_id: input.requestId,

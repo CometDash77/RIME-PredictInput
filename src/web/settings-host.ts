@@ -17,6 +17,7 @@ import { healthWire, type HealthReport } from "../inference/health.js";
 import { settingsActionWire, type SettingsActionReply } from "../inference/actions.js";
 import { compact, type JsonValue } from "../json/canonical.js";
 import { isJsonObject, type JsonObject } from "../json/guards.js";
+import type { UpdateCheckOutcome } from "../providers/update.js";
 import type { SettingsStoreError } from "../settings/store.js";
 import { safeError, safeMetadata } from "./safe-metadata.js";
 
@@ -52,9 +53,16 @@ export interface SettingsWebRuntime {
   reloadSettings(): Result<Settings, SettingsStoreError>;
 }
 
+/** 更新检查入口：设置页会话读取时被询问；节流与静默由实现负责（spec #10）。 */
+export interface SettingsWebUpdates {
+  maybeCheck(): Promise<UpdateCheckOutcome>;
+}
+
 export interface SettingsWebHostOptions {
   readonly inference: SettingsWebInference;
   readonly runtime: SettingsWebRuntime;
+  /** 缺省 = 不查更新，视图不带 update 字段（页面完全静默）。 */
+  readonly updates?: SettingsWebUpdates;
   readonly host?: string;
   readonly port?: number;
   readonly initialToken?: string | null;
@@ -89,6 +97,7 @@ function filteredObject(value: unknown): JsonObject {
 export class SettingsWebHost {
   readonly #inference: SettingsWebInference;
   readonly #runtime: SettingsWebRuntime;
+  readonly #updates: SettingsWebUpdates | undefined;
   readonly #host: string;
   readonly #pageUrl: URL;
   readonly #now: () => number;
@@ -102,6 +111,7 @@ export class SettingsWebHost {
     if (host !== HOST) throw new Error("settings host must bind to IPv4 loopback");
     this.#inference = options.inference;
     this.#runtime = options.runtime;
+    this.#updates = options.updates;
     this.#host = host;
     this.#port = options.port ?? PORT;
     this.#now = options.now ?? ((): number => Date.now() / 1000);
@@ -423,23 +433,53 @@ export class SettingsWebHost {
     });
   }
 
-  /** 页面拿到的是设置本体、经过裁剪的健康快照，以及伴随进程状态。 */
+  /** 页面拿到的是设置本体、经过裁剪的健康快照、更新检查结果，以及伴随进程状态。 */
   async #settingsView(key: string): Promise<Result<JsonObject, string>> {
     const settings = this.#runtime.reloadSettings();
     if (isErr(settings)) return err(settings.error);
-    let health: JsonObject;
-    try {
-      health = filteredObject(healthWire(await this.#inference.health(settings.value)));
-    } catch {
-      health = jsonRecord({ status: "unavailable", error_code: "status_unavailable" });
-    }
+    // health 与更新检查并行：更新检查自带超时上限（FetchTransport 缺省 3 秒），
+    // 不叠加到页面加载，也不会阻塞预测链路——只有设置页会话读取才会触发。
+    const [health, update] = await Promise.all([
+      this.#health(settings.value),
+      this.#updateView(settings.value.updateCheckEnabled),
+    ]);
     const revision = this.#revisions.get(key) ?? this.#inference.statusRevision;
     const view: Record<string, JsonValue> = { ...health, last_inference: this.#inference.statusSince(revision) };
     return ok({
       settings: toWire(settings.value),
       health: jsonRecord(view),
+      ...(update === null ? {} : { update }),
       sidecar: jsonRecord({ state: this.#runtime.lastState, pid: this.#runtime.pid }),
     });
+  }
+
+  async #health(settings: Settings): Promise<JsonObject> {
+    try {
+      return filteredObject(healthWire(await this.#inference.health(settings)));
+    } catch {
+      return jsonRecord({ status: "unavailable", error_code: "status_unavailable" });
+    }
+  }
+
+  /**
+   * 更新检查视图：开关关闭或未接线时不下场；unavailable 也折叠成不下场——
+   * 页面只对 update-available / up-to-date 有反应，失败与关闭都完全静默
+   * （spec #10 用户故事 23/24）。产出只透传 tag 与 github.com 跳转链接。
+   */
+  async #updateView(enabled: boolean): Promise<JsonObject | null> {
+    const checker = this.#updates;
+    if (checker === undefined || !enabled) return null;
+    let outcome: UpdateCheckOutcome;
+    try {
+      outcome = await checker.maybeCheck();
+    } catch {
+      return null;
+    }
+    if (outcome.kind === "update-available") {
+      return jsonRecord({ kind: "update-available", tag: outcome.latest.tag, url: outcome.latest.url });
+    }
+    if (outcome.kind === "up-to-date") return jsonRecord({ kind: "up-to-date" });
+    return null;
   }
 
   #saveSettings(raw: JsonObject): Result<JsonObject, string> {

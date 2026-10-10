@@ -1,0 +1,9 @@
+{
+  "frozen": true,
+  "min_beyond_page_hit_rate": 0.6,
+  "min_hit_rate": 0,
+  "max_blank_rate": 0.25,
+  "max_mechanical_rate": 0,
+  "max_error_rate": 0.15,
+  "_note": "#6 冻结门槛（YG 2026-10-08 点头）：词库内深位（beyond_page，目标在完整候选集合内但第 1 页之后）精确命中率 ≥60%，按 schema 分别计，两个 schema 全部满足才判达标；全局命中率不设门槛（min_hit_rate=0，候选内子集只作回归断言）；留空率 ≤25%（blank = 空输出或合法读音但词库无此词的造词输出；unsup 协议/词库层结构性拒绝不计入）；机制错误率硬 0（mechanical = 复读上文/非 CJK/拼音残留/超长/读音不符，出现即实现 bug）；传输与形状错误率 ≤15%。口径依据：模型只在词库内选择、绝不造词（#6 Q11 定夺）。frozen=true：rig 结论不再标注 draft。"
+}

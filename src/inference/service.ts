@@ -1,8 +1,10 @@
-import { VALIDATION, isValidatedIdentity } from "../contracts/policy.js";
+import { VALIDATION, cloudIdentityFor, isEligibleIdentity } from "../contracts/policy.js";
 import type { RequestEnvelope } from "../contracts/envelope.js";
 import { decisionInputFromPayload, type DecisionInput } from "../domain/decision.js";
 import { ENGINE_ID_PATTERN } from "../domain/ids.js";
-import type { Settings } from "../domain/settings.js";
+import type { LocalBackendErrorCode } from "../domain/error-codes.js";
+import { DEFAULT_LOCAL_BASE_URL, type CloudChannel, type Settings } from "../domain/settings.js";
+import { err, ok, type Result } from "../domain/result.js";
 import {
   STATUS_METADATA_KEYS,
   type InferenceStatusMetadata,
@@ -12,12 +14,13 @@ import { MAX_QUEUED_PREDICTIONS } from "../domain/cache-limits.js";
 import { HEX_32 } from "../json/digest.js";
 import type { JsonValue } from "../json/canonical.js";
 import type { JsonObject } from "../json/guards.js";
+import { CloudBackend } from "../providers/cloud.js";
 import { settingsActionWire, type SettingsActionReply } from "./actions.js";
 import { PredictionCache } from "./cache.js";
 import { healthWire, type HealthReport } from "./health.js";
 import { describeModel, type ModelStatus } from "./model-status.js";
-import { failedLocalOutcome, failedOutcome, pendingOutcome, predictionWire, type PredictionOk, type PredictionOutcome } from "./outcome.js";
-import type { LocalBackendPort } from "./ports.js";
+import { failedCloudOutcome, failedLocalOutcome, failedOutcome, pendingOutcome, predictionWire, type PredictionOk, type PredictionOutcome } from "./outcome.js";
+import type { CloudChannelPort, LocalBackendPort } from "./ports.js";
 import { CancelledTask, SerialQueue, type QueuedTask } from "./queue.js";
 import type { DispatchReply } from "../runtime/dispatch.js";
 
@@ -31,6 +34,8 @@ export type { DispatchReply };
 
 export interface InferenceServiceOptions {
   readonly local: LocalBackendPort;
+  /** 云端通道端口；缺省用真实 CloudBackend（未启用云端时不会出网）。 */
+  readonly cloud?: CloudChannelPort;
   readonly cache?: PredictionCache;
   readonly sleep?: (seconds: number) => Promise<void>;
   readonly monotonic?: () => number;
@@ -49,6 +54,7 @@ function defaultMonotonic(): number {
 /** 把「未验收/未安装」等分支统一交给 `describeModel`，这里只负责取清单。 */
 export class InferenceService {
   readonly #local: LocalBackendPort;
+  readonly #cloud: CloudChannelPort;
   readonly #cache: PredictionCache;
   readonly #sleep: (seconds: number) => Promise<void>;
   readonly #monotonic: () => number;
@@ -63,6 +69,7 @@ export class InferenceService {
 
   constructor(options: InferenceServiceOptions) {
     this.#local = options.local;
+    this.#cloud = options.cloud ?? new CloudBackend();
     this.#cache = options.cache ?? new PredictionCache();
     this.#sleep = options.sleep ?? defaultSleep;
     this.#monotonic = options.monotonic ?? defaultMonotonic;
@@ -84,9 +91,6 @@ export class InferenceService {
   async submit(request: RequestEnvelope, settings: Settings): Promise<DispatchReply> {
     if (request.kind !== "predict" || !settings.enabled) {
       return { kind: "immediate", payload: await this.dispatch(request, settings) };
-    }
-    if (settings.backend !== "local" || settings.provider !== null) {
-      return { kind: "immediate", payload: predictionWire(failedOutcome("local_only")) };
     }
     const decision = decisionInputFromPayload(request.payload);
     if (!decision.ok) {
@@ -111,7 +115,7 @@ export class InferenceService {
     const task = this.#queue.run<PredictionOutcome | null>(async () => {
       await this.#sleep(Math.max(0, notBefore - this.#monotonic()));
       if (this.#closed || this.#latestSeq.get(engineId) !== seq) return null;
-      const outcome = await this.#localPredict(decision.value, settings, request);
+      const outcome = await this.#predict(decision.value, settings, request);
       if (this.#closed || this.#latestSeq.get(engineId) !== seq) return null;
       return outcome;
     });
@@ -126,9 +130,6 @@ export class InferenceService {
 
   /** 旧 `__call__`：同步路径的完整分发。 */
   async dispatch(request: RequestEnvelope, settings: Settings): Promise<JsonObject> {
-    if (settings.backend !== "local" || settings.provider !== null) {
-      return predictionWire(failedOutcome("local_only"));
-    }
     if (request.kind === "health") return healthWire(await this.health(settings));
     if (request.kind === "settings") return settingsActionWire(await this.settingsAction(request.payload, settings));
     if (request.kind !== "predict") return predictionWire(failedOutcome("invalid_request"));
@@ -137,32 +138,55 @@ export class InferenceService {
     if (this.#closed) return predictionWire(failedOutcome("sidecar_stopping"));
     this.#latestSeq.set(request.engineId, request.seq);
     if (!settings.enabled) return predictionWire(failedLocalOutcome("disabled"));
-    return predictionWire(await this.#localPredict(decision.value, settings, request));
+    return predictionWire(await this.#predict(decision.value, settings, request));
+  }
+
+  /** 通道选择：云端开关打开且配置在场 → 云端；其余一律本地（含兼容端点）。 */
+  #activeCloud(settings: Settings): CloudChannel | null {
+    return settings.cloudEnabled && settings.cloud !== null ? settings.cloud : null;
+  }
+
+  async #predict(decision: DecisionInput, settings: Settings, request: RequestEnvelope): Promise<PredictionOutcome> {
+    const cloud = this.#activeCloud(settings);
+    return cloud === null
+      ? await this.#localPredict(decision, settings, request)
+      : await this.#cloudPredict(decision, cloud, request);
+  }
+
+  /** 本地身份解析：Ollama 缺省端点走 digest 复核；改写的兼容端点是纯计算（无需出网）。 */
+  async #resolveLocalIdentity(settings: Settings): Promise<Result<string, LocalBackendErrorCode>> {
+    if (settings.localBaseUrl !== DEFAULT_LOCAL_BASE_URL) {
+      return ok(cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel));
+    }
+    const resolved = await this.#local.resolveModel(settings.localModel);
+    if (!resolved.ok) return err(resolved.error);
+    return ok(resolved.value.identity);
   }
 
   async #localPredict(decision: DecisionInput, settings: Settings, request: RequestEnvelope): Promise<PredictionOutcome> {
     const startedAt = this.#monotonic();
-    const resolved = await this.#local.resolveModel(settings.localModel);
-    if (!resolved.ok) {
-      return this.#recordStatus(failedLocalOutcome(resolved.error), request, startedAt);
+    const identity = await this.#resolveLocalIdentity(settings);
+    if (!identity.ok) {
+      return this.#recordStatus(failedLocalOutcome(identity.error), request, startedAt);
     }
-    const identity = resolved.value.identity;
-    if (!isValidatedIdentity(identity)) {
+    const id = identity.value;
+    if (!isEligibleIdentity(id)) {
       return this.#recordStatus(
-        { kind: "unavailable", errorCode: "identity_not_validated", backend: "local", modelIdentity: identity, ineligible: true },
+        { kind: "unavailable", errorCode: "identity_not_validated", backend: "local", modelIdentity: id, ineligible: true },
         request,
         startedAt,
       );
     }
+    const provider = settings.localBaseUrl === DEFAULT_LOCAL_BASE_URL ? "ollama" : "local-compat";
     const cached = this.#local.isRouter(settings.localModel)
       ? null
-      : this.#cache.get(decision, { backend: "local", provider: "ollama", modelIdentity: identity });
+      : this.#cache.get(decision, { backend: "local", provider, modelIdentity: id });
     if (cached !== null && cached.kind === "ok") {
-      const hit = applyValidation({ ...cached, cacheHit: true }, identity);
+      const hit = applyValidation({ ...cached, cacheHit: true }, id);
       this.#recordStatus(hit, request, startedAt);
       return hit;
     }
-    const result = await this.#local.infer(decision, settings, { modelIdentity: identity });
+    const result = await this.#local.infer(decision, settings, { modelIdentity: id });
     if (result.kind !== "ok") {
       const outcome: PredictionOutcome = { kind: "unavailable", errorCode: result.errorCode };
       this.#recordStatus(outcome, request, startedAt);
@@ -177,18 +201,66 @@ export class InferenceService {
       eligible: false,
       humanReview: VALIDATION.human_review,
     };
-    this.#cache.put(decision, { backend: "local", provider: "ollama", modelIdentity: actualIdentity }, ok);
+    this.#cache.put(decision, { backend: "local", provider: result.provider, modelIdentity: actualIdentity }, ok);
     const outcome = applyValidation(ok, actualIdentity);
+    this.#recordStatus(outcome, request, startedAt);
+    return outcome;
+  }
+
+  /**
+   * 云端预测：与本地同一套身份 → 缓存 → 推理 → 验收流水线。
+   *
+   * 缓存身份 `{backend: "cloud", provider: kind, modelIdentity}` 与本地天然隔离——
+   * 「跨通道/跨模型的旧结果一律不显示」由缓存键 + settingsChanged + seq 作废共同保证。
+   */
+  async #cloudPredict(decision: DecisionInput, cloud: CloudChannel, request: RequestEnvelope): Promise<PredictionOutcome> {
+    const startedAt = this.#monotonic();
+    const identity = this.#cloud.resolveIdentity(cloud);
+    if (!identity.ok) {
+      return this.#recordStatus(failedCloudOutcome(identity.error), request, startedAt);
+    }
+    const id = identity.value;
+    if (!isEligibleIdentity(id)) {
+      return this.#recordStatus(
+        { kind: "unavailable", errorCode: "identity_not_validated", backend: "cloud", modelIdentity: id, ineligible: true },
+        request,
+        startedAt,
+      );
+    }
+    const cacheIdentity = { backend: "cloud", provider: cloud.kind, modelIdentity: id };
+    const cached = this.#cache.get(decision, cacheIdentity);
+    if (cached !== null && cached.kind === "ok") {
+      const hit = applyValidation({ ...cached, cacheHit: true }, id);
+      this.#recordStatus(hit, request, startedAt);
+      return hit;
+    }
+    const result = await this.#cloud.infer(decision, cloud);
+    if (result.kind !== "ok") {
+      const outcome: PredictionOutcome = { kind: "unavailable", errorCode: result.errorCode, backend: "cloud" };
+      this.#recordStatus(outcome, request, startedAt);
+      return outcome;
+    }
+    const ok: PredictionOk = {
+      ...result,
+      cacheHit: false,
+      calibrated: false,
+      validated: false,
+      eligible: false,
+      humanReview: VALIDATION.human_review,
+    };
+    this.#cache.put(decision, cacheIdentity, ok);
+    const outcome = applyValidation(ok, result.modelIdentity);
     this.#recordStatus(outcome, request, startedAt);
     return outcome;
   }
 
   async health(settings: Settings): Promise<HealthReport> {
     // 状态查询绝不启动 Ollama：启动只由真实预测或设置页按钮触发。
+    const cloud = this.#activeCloud(settings);
     return {
       status: "ready",
-      backend: settings.backend,
-      connection: await this.#local.testConnection(),
+      backend: cloud === null ? settings.backend : "cloud",
+      connection: cloud === null ? await this.#local.testConnection() : await this.#cloud.testConnection(cloud),
       selectedModel: await this.modelStatus(settings.localModel),
       cacheEntries: this.#cache.size,
       lastInference: { ...this.#lastStatus },
@@ -256,8 +328,13 @@ export class InferenceService {
       }
       case "status":
         return { kind: "health", report: await this.health(settings) };
-      case "test_connection":
-        return { kind: "connection", connection: await this.#local.testConnection() };
+      case "test_connection": {
+        const cloud = this.#activeCloud(settings);
+        return {
+          kind: "connection",
+          connection: cloud === null ? await this.#local.testConnection() : await this.#cloud.testConnection(cloud),
+        };
+      }
       default:
         return { kind: "unavailable", errorCode: "invalid_request" };
     }
@@ -319,13 +396,13 @@ function assignMetadata(draft: InferenceStatusMetadataDraft, key: string, entry:
 
 /** `_apply_validation`：把「是否有资格」的判定集中在一处，成功路径都要过它。 */
 function applyValidation(outcome: PredictionOk, identity: string): PredictionOk {
-  const validated = isValidatedIdentity(identity);
+  const validated = isEligibleIdentity(identity);
   return {
     ...outcome,
     modelIdentity: identity,
     calibrated: false,
     validated,
-    eligible: validated && outcome.provider === "ollama",
+    eligible: validated,
     humanReview: VALIDATION.human_review,
   };
 }
