@@ -61,6 +61,13 @@ export interface CredentialRule {
 /** 生产代码里的基线；上界只允许下调，上调必须有人审。 */
 export const CREDENTIAL_RULES: readonly CredentialRule[] = [
   {
+    id: "installer-excluded-data-directory",
+    path: "src/installer/payload.ts",
+    token: "credential",
+    max: 1,
+    reason: "安装载荷拒绝 credentials 目录的字面名单；无凭据值，增加同类字样仍需重新审核",
+  },
+  {
     id: "cloud-wire-secret-keys",
     path: "src/contracts/cloud-wire.ts",
     token: "apikey",

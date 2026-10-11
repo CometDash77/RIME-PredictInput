@@ -46,6 +46,7 @@ export interface SettingsLauncherOptions {
 
 /** 旧实现用 `MAIN.is_file()` 判断入口是否就位。 */
 export function defaultMainScript(): string | null {
+  if ((process as NodeJS.Process & { pkg?: unknown }).pkg !== undefined) return process.execPath;
   for (const relative of ["../cli/main.js", "../cli/main.ts"]) {
     const candidate = fileURLToPath(new URL(relative, import.meta.url));
     if (existsSync(candidate)) return candidate;
@@ -88,7 +89,10 @@ function defaultOpenBrowser(url: string): boolean {
 
 function defaultSpawnSidecar(script: string, token: string): SidecarProcess | null {
   try {
-    const child = spawn(process.execPath, [script, "--source", "settings", "--token", token], {
+    const args = script === process.execPath
+      ? ["--source", "settings", "--token", token]
+      : [script, "--source", "settings", "--token", token];
+    const child = spawn(process.execPath, args, {
       cwd: dirname(script),
       stdio: "ignore",
       windowsHide: true,

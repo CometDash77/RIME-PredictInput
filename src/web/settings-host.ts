@@ -9,6 +9,8 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { isErr, ok, err, type Result } from "../domain/result.js";
 import { settingsFromMapping, toWire, type Settings } from "../domain/settings.js";
@@ -115,7 +117,11 @@ export class SettingsWebHost {
     this.#host = host;
     this.#port = options.port ?? PORT;
     this.#now = options.now ?? ((): number => Date.now() / 1000);
-    this.#pageUrl = options.pageUrl ?? new URL("../../assets/settings.html", import.meta.url);
+    this.#pageUrl = options.pageUrl ?? (
+      (process as NodeJS.Process & { pkg?: unknown }).pkg !== undefined
+        ? pathToFileURL(join(dirname(process.execPath), "settings.html"))
+        : new URL("../../assets/settings.html", import.meta.url)
+    );
     const initial = options.initialToken;
     if (initial !== undefined && initial !== null) this.registerToken(initial);
   }

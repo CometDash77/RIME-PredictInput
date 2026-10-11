@@ -13,8 +13,8 @@
 ## 决定
 
 1. **R1：程序根 = `%ProgramFiles%\Rime\weasel-<官方版本>`，前端 DLL 留在程序根。**
-   `programRoot = join(programFiles, installParent ?? "Rime", "weasel-" + OFFICIAL_WEASEL.version)`，
-   冻结版本 `0.17.4`；`frontend = programRoot\WeaselTSF.dll`。TSF 的注册指向该 DLL，位置不能挪；
+   相对 `installParent` 拼到 `programFiles`；绝对 `installParent`（官方注册表 InstallDir）直接作为上级目录，
+   冻结版本 `0.17.4`；`frontend = programRoot\weaselx64.dll`（#28 核验真实 fork 后修正）。原生 setup 把前端复制到系统目录并注册，源 DLL 留在程序根；
    程序目录（`programFiles` 与 `installParent`）可注入，缺省即官方布局。
 2. **R2：自有新增产物集中到 `<程序根>\predict`。** 两个伴随进程与设置页都在
    `FEATURE_DIRECTORY = "predict"` 之下，程序根只多这一个目录。理由：卸载的可枚举性依赖
@@ -34,10 +34,8 @@
    `%LOCALAPPDATA%\rime-model-predict\settings.json` 不存在或读不出来 → false（不动）；只有保存成功才 true。
    安装计划只消费这个布尔量：`migrated` 才产出 `delete-tree` 清理旧位置，`blocked` 时旧路径进保留清单、
    一个字节都不动。
-6. **只交付 `patchFilePath(paths, schemaId)`，枚举哪些方案归安装器。** 方案自己的 `engine/filters`
-   不继承 `default.yaml`，所以「给哪些方案写补丁」是安装器的枚举问题，域层猜不出来；域层只保证
-   文件名合法（`/^[A-Za-z0-9_.-]+$/`，非法抛 `schema id must be a plain file name`）。选哪些方案、
-   写几条、要不要问用户——属安装器形态，见 S9（`#27`）。
+6. **只交付 `patchFilePath(paths, schemaId)`。** #28 用户明确确认安装器不枚举或修改 custom，
+   随包提供手动合并滤镜和移除接入项的指引；路径辅助函数保留供显式操作使用。见 ADR 0010。
 7. **路径在构建期固定，运行时不做探测。** 只有目录名与官方版本是编译期常量；`programFiles`、
    `userProfile`、`appData` 由构建/打包入口灌入。域层与安装计划永不读 `process.env`、永不在运行时
    猜「自己在哪」——否则验收⑦的纯快照重放不成立。
@@ -53,6 +51,6 @@
 - 终止伴随进程是唯一带外部危险的动作，因此做得最窄：先按 `status.json` 里的 pid 查进程映像，
   归一化（去引号、斜杠统一、大小写不敏感）后必须落在自有伴随进程清单里，否则拒绝终止并提示
   「手动退出后重试」（`retryable: false`）。不盲杀 pid。
-- 本 ADR 不裁定安装器形态（NSIS/Inno/MSI）、UAC 界面与 `ProgramData` 的真实 ACL —— 那是 S9（`#27`）。
+- 本 ADR 不裁定安装器形态（NSIS/Inno/MSI）、UAC 界面与 `ProgramData` 的真实 ACL —— 那是 S9（`#28`）。
 - 已知未收口：S4（`#23`）遗留的路径分隔符口径（`include/WeaselPredictSettings.h:77-88` 只在末字符
   非分隔符时补反斜杠，而该票测试期望纯反斜杠）不在本票范围，路径表不依赖它。

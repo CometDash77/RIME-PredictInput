@@ -8,10 +8,10 @@
  * 四条规则的落点（逐条证据见 ADR 0008）：
  * - R1 程序根与官方 Weasel 同处：官方安装器的默认 `$INSTDIR` 是 `%ProgramFiles%\Rime`
  *   （x64 与 ARM64 都取 `$PROGRAMFILES64`），程序文件实际落在 `$INSTDIR\weasel-<版本>`
- *   （fork `output/install.nsi:21,126-143,212`）；被替换的 `WeaselTSF.dll` 必须留在
- *   程序根，因为 TSF 注册位置不能改。
+ *   （fork `output/install.nsi:21,126-143,212`）；被替换的 `weaselx64.dll` 必须留在
+ *   程序根；原生 setup 复制到官方系统注册位置。
  * - R2 自有**新增**产物（sidecar 双变体、设置页资产）集中到 `<程序根>\predict`。
- * - R3 用户侧接入点只有两处：RIME 用户目录（Lua 模块 + custom 补丁条目）与
+ * - R3 用户侧接入点只有两处：RIME 用户目录（Lua 模块；custom 由用户手动合并）与
  *   `%USERPROFILE%\.rime-model-predict`。
  * - R4 见文件头。
  *
@@ -56,7 +56,7 @@ export const SETTINGS_PAGE_NAME = "settings.html";
 export const LAUNCHER_LIBRARY_NAME = "rime_model_predict_launcher.dll";
 
 /** 被替换的官方前端库名（留在程序根，R1）。 */
-export const FRONTEND_LIBRARY_NAME = "WeaselTSF.dll";
+export const FRONTEND_LIBRARY_NAME = "weaselx64.dll";
 
 /** librime-lua 引用的滤镜模块名；`*` 前缀让 librime-lua 直接 `require` 它。 */
 export const FILTER_MODULE_NAME = "model_predict_filter";
@@ -163,7 +163,9 @@ export function pathTable(input: PathTableInput): InstallPaths {
   const userProfile = requireAbsolute(input.userProfile, "user profile directory");
   const appData = requireAbsolute(input.appData, "application data directory");
   const installParent = input.installParent ?? OFFICIAL_INSTALL_PARENT;
-  const programRoot = join(programFiles, installParent, officialWeaselDirectory());
+  const programRoot = isAbsolute(installParent)
+    ? join(installParent, officialWeaselDirectory())
+    : join(programFiles, installParent, officialWeaselDirectory());
   const featureRoot = join(programRoot, FEATURE_DIRECTORY);
 
   const rimeUserDirectory = requireAbsolute(

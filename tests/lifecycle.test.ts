@@ -23,7 +23,9 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { runSidecar } from "../src/cli/main.js";
+import { SettingsWebHost } from "../src/web/settings-host.js";
 import { appPaths } from "../src/ipc/app-paths.js";
 import { FileIpc } from "../src/ipc/file-ipc.js";
 import {
@@ -117,6 +119,27 @@ afterEach(() => {
 });
 
 describe("sidecar 只允许一个实例", () => {
+  it("真实入口首次启动先建立私有目录，再持锁运行并空闲退出", async () => {
+    const profile = join(workspace(), "fresh-profile");
+    const paths = appPaths(join(profile, ".rime-model-predict"));
+    expect(existsSync(paths.root)).toBe(false);
+    // Keep the user's fixed HTTP port entirely out of this lifecycle regression.
+    const start = vi.spyOn(SettingsWebHost.prototype, "start").mockImplementation(async () => {
+      expect(lockOwner(paths.root)).toBe(process.pid);
+      expect(JSON.parse(readFileSync(paths.status, "utf8")) as unknown).toMatchObject({ state: "ready", pid: process.pid });
+    });
+    vi.stubEnv("USERPROFILE", profile);
+    try {
+      expect(await runSidecar({ source: "settings", idleSeconds: 0.03, token: null, migrateSettings: false })).toBe(0);
+      expect(start).toHaveBeenCalledOnce();
+      expect(existsSync(join(paths.root, SIDECAR_LOCK_FILE))).toBe(false);
+      expect(JSON.parse(readFileSync(paths.status, "utf8")) as unknown).toMatchObject({ state: "stopped", pid: process.pid });
+    } finally {
+      start.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("同一个应用目录里只能有一个持有者，放开之后才轮到下一个", () => {
     const root = workspace();
     const lockPath = join(root, SIDECAR_LOCK_FILE);

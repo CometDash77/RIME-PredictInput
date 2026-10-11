@@ -49,8 +49,13 @@ describe("R1 程序根与官方 Weasel 同处", () => {
     expect(custom.programRoot).toBe("C:\\Program Files\\RimeDev\\weasel-0.17.4");
   });
 
+  it("注册表的绝对 InstallDir 保持原处，不追加 ProgramFiles 前缀", () => {
+    const custom = pathTable({ ...INPUT, installParent: "D:\\InputMethods\\Rime" });
+    expect(custom.programRoot).toBe("D:\\InputMethods\\Rime\\weasel-0.17.4");
+  });
+
   it("被替换的前端库留在程序根：TSF 注册位置不能改", () => {
-    expect(PATHS.frontend).toBe(`${PROGRAM_ROOT}\\WeaselTSF.dll`);
+    expect(PATHS.frontend).toBe(`${PROGRAM_ROOT}\\weaselx64.dll`);
   });
 });
 
@@ -142,7 +147,7 @@ describe("清单口径：瞬态、保留、终止契约、角色映射", () => {
       "sidecar-console",
       "sidecar-window",
     ]);
-    expect(roles[ROLE_FRONTEND]).toBe(`${PROGRAM_ROOT}\\WeaselTSF.dll`);
+    expect(roles[ROLE_FRONTEND]).toBe(`${PROGRAM_ROOT}\\weaselx64.dll`);
     expect(roles[ROLE_SIDECAR_CONSOLE]).toBe(`${FEATURE_ROOT}\\rime-predict-sidecar.exe`);
     expect(roles[ROLE_SIDECAR_WINDOW]).toBe(`${FEATURE_ROOT}\\rime-predict-sidecar-gui.exe`);
     expect(roles[ROLE_SETTINGS_PAGE]).toBe(`${FEATURE_ROOT}\\settings.html`);

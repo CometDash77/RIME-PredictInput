@@ -21,6 +21,7 @@ import { SingleInstance, SIDECAR_LOCK_FILE } from "../runtime/lifecycle.js";
 import { SidecarRuntime } from "../runtime/runtime.js";
 import { createWeaselWindowMessenger } from "../runtime/weasel-messenger-koffi.js";
 import { migrateLegacySettings } from "../settings/store.js";
+import { ensurePrivateDirectory } from "../settings/private-directory.js";
 import { openSettingsSession } from "../web/launcher.js";
 import { SettingsWebHost } from "../web/settings-host.js";
 import { runSelftest } from "./selftest.js";
@@ -84,6 +85,9 @@ export async function runSidecar(args: CliArgs): Promise<number> {
   }
   if (args.idleSeconds <= 0) return 2;
 
+  // The first launch has no application directory yet. Create it with the same
+  // private ACL as runtime data before attempting the exclusive lock file.
+  ensurePrivateDirectory(paths.root);
   const lock = new SingleInstance(join(paths.root, SIDECAR_LOCK_FILE));
   if (!lock.acquire()) return 0;
 

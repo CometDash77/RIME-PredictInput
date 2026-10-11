@@ -1,0 +1,17 @@
+{
+  "nsis": {
+    "version": "3.10",
+    "compilerSha256": "913ac7636eec910061c737a120c067ce9a77dbc2e69fac8d8117761376f271c3",
+    "licenseSha256": "d8cb366b017767a898b073301fb8a400fe6f35f828e291facb5c92bc09148112",
+    "source": "https://sourceforge.net/projects/nsis/files/NSIS%203/3.10/"
+  },
+  "sevenzip": {
+    "version": "24.05",
+    "exeSha256": "f2e7726726c8cfc23e84de198abc04a5fe73249dcdf9ef9e5ca2b83e23643ae6",
+    "dllSha256": "f661fdfe368d2e69c47faee8942e73ffe763a58a317fe99825ed47482ce52163",
+    "source": "https://github.com/rime/weasel/tree/0.17.4/output"
+  },
+  "msvc": { "toolset": "v142", "version": "14.29.30133", "sdk": "10.0.19041.0" },
+  "runtime": "node22-win-x64",
+  "npmTools": "Versions resolved by pnpm-lock.yaml"
+}
