@@ -1,6 +1,7 @@
 # Code-quality review: #28
 
-**codeQualityStatus:** CLEAR  
+**codeQualityStatus:** CLEAR
+
 **recommendation:** APPROVE
 
 ## Scope and evidence inspected
