@@ -17,6 +17,7 @@ const tag = required("--tag");
 const n = /^(?:v0\.17\.4-predict\.|predict-0\.17\.4\.)([1-9][0-9]*)$/.exec(tag)?.[1];
 if (n === undefined) throw new Error("Fork tag must identify 0.17.4-predict.N");
 const archive = path.resolve(required("--archive"));
+const payloadZip = path.resolve(required("--payload-zip"));
 const sevenzip = path.resolve(required("--sevenzip"));
 const output = path.resolve(required("--output"));
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -32,6 +33,11 @@ const asset = release.assets.find(a => a.name === path.basename(archive));
 const bytes = readFileSync(archive);
 const sha256 = hash(bytes);
 if (!asset || asset.digest !== `sha256:${sha256}` || asset.size !== bytes.length) throw new Error("Local archive does not match the GitHub release asset digest/size");
+// Deterministic extraction source: the fork CI packs this zip from build output (the installer exe has duplicate per-arch entries that shadow each other).
+const payloadAsset = release.assets.find(a => a.name === path.basename(payloadZip));
+const payloadBytes = readFileSync(payloadZip);
+const payloadSha256 = hash(payloadBytes);
+if (!payloadAsset || payloadAsset.digest !== `sha256:${payloadSha256}` || payloadAsset.size !== payloadBytes.length) throw new Error("Payload zip does not match the GitHub release asset digest/size");
 let object = api(`git/ref/tags/${tag}`).object;
 if (object.type === "tag") object = api(`git/tags/${object.sha}`).object;
 if (object.type !== "commit") throw new Error("Tag must resolve to a commit");
@@ -39,7 +45,7 @@ const toolchain = JSON.parse(readFileSync(path.join(root,"tools/installer/toolch
 if (hash(readFileSync(sevenzip)) !== toolchain.sevenzip.exeSha256
     || hash(readFileSync(path.join(path.dirname(sevenzip),"7z.dll"))) !== toolchain.sevenzip.dllSha256) throw new Error("7-Zip tool hash mismatch");
 const entries = [
-  ["frontend", "weaselx64.dll"], ["frontend-x86", "Win32/weasel.dll"],
+  ["frontend", "weaselx64.dll"], ["frontend-x86", "weasel.dll"],
   ["setup", "WeaselSetup.exe"], ["server", "WeaselServer.exe"], ["rime", "rime.dll"],
   ["deployer", "WeaselDeployer.exe"], ["winsparkle", "WinSparkle.dll"],
   ["fork-license", "LICENSE.txt"], ["fork-readme", "README.txt"],
@@ -56,6 +62,7 @@ const receipt = {
   format:1,releaseVerified:true,draft:false,prerelease:false,version:`0.17.4-predict.${n}`,
   tag,commit:object.sha,sourceUrl:`https://github.com/CometDash77/weasel/tree/${object.sha}`,
   releaseUrl:release.html_url,releaseId:release.id,assetId:asset.id,assetUrl:asset.browser_download_url,
+  payloadSha256,payloadBytes:payloadBytes.length,payloadAssetId:payloadAsset.id,payloadUrl:payloadAsset.browser_download_url,
   bytes:bytes.length,sha256,files,
 };
 mkdirSync(path.dirname(output),{recursive:true});
