@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-installer:
-    runs-on: windows-2019
+    runs-on: windows-2022
     permissions:
       contents: read
     env:
@@ -67,7 +67,7 @@ jobs:
       - name: Build installer (pinned inputs only)
         shell: pwsh
         run: |
-          node tools/installer/build.mjs --fork-archive fork-installer.exe --fork-lock build/installer/fork-lock.json --makensis nsis\nsis-3.10\makensis.exe --sevenzip sevenzip\7z.exe --vcvarsall 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+          node tools/installer/build.mjs --fork-archive fork-installer.exe --fork-lock build/installer/fork-lock.json --makensis nsis\nsis-3.10\makensis.exe --sevenzip sevenzip\7z.exe --vcvarsall 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
 
       - name: Settings GUI smoke
         run: node tools/installer/smoke-settings.mjs
