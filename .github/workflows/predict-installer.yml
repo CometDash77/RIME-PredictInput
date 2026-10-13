@@ -1,0 +1,85 @@
+name: Predict Installer CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-installer:
+    runs-on: windows-2019
+    permissions:
+      contents: read
+    env:
+      FORK_TAG: predict-0.17.4.2
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build sidecar exe (dist -> bundle -> pkg -> selftest)
+        run: pnpm run build:exe
+
+      - name: Stage release documents
+        run: pnpm run release:stage
+
+      - name: NSIS 3.10 (sourceforge zip, hash checked by build.mjs)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri 'https://downloads.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10.zip' -OutFile nsis.zip -MaximumRedirection 10
+          Expand-Archive nsis.zip -DestinationPath nsis
+          & nsis\nsis-3.10\makensis.exe /VERSION
+
+      - name: 7-Zip from fork tag (hash checked by pin-fork.mjs/build.mjs)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path sevenzip | Out-Null
+          $b = 'https://raw.githubusercontent.com/CometDash77/weasel/' + $env:FORK_TAG + '/output'
+          Invoke-WebRequest -Uri ($b + '/7z.exe') -OutFile sevenzip\7z.exe
+          Invoke-WebRequest -Uri ($b + '/7z.dll') -OutFile sevenzip\7z.dll
+
+      - name: Download fork release asset
+        shell: pwsh
+        run: |
+          gh release download $env:FORK_TAG -R CometDash77/weasel --pattern 'weasel-0.17.4-predict.2-installer.exe' --output fork-installer.exe
+          (Get-FileHash fork-installer.exe -Algorithm SHA256).Hash.ToLower()
+
+      - name: Pin fork release provenance
+        shell: pwsh
+        run: |
+          node tools/installer/pin-fork.mjs --tag $env:FORK_TAG --archive fork-installer.exe --sevenzip sevenzip\7z.exe --output build/installer/fork-lock.json
+
+      - name: Test suite
+        run: pnpm run verify
+
+      - name: Build installer (pinned inputs only)
+        shell: pwsh
+        run: |
+          node tools/installer/build.mjs --fork-archive fork-installer.exe --fork-lock build/installer/fork-lock.json --makensis nsis\nsis-3.10\makensis.exe --sevenzip sevenzip\7z.exe --vcvarsall 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+
+      - name: Settings GUI smoke
+        run: node tools/installer/smoke-settings.mjs
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: predict-installer
+          path: |
+            build/installer/rime-predict-*-setup.exe
+            build/installer/build-report.json
+            build/installer/manifest.json
+            build/installer/fork-lock.json
+            build/smoke-settings-*/report.json
+          if-no-files-found: error
