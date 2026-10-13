@@ -2,6 +2,11 @@ name: Predict Installer CI
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch containing the S9 installer implementation
+        required: false
+        default: codex/issue-28-installer
 
 jobs:
   build-installer:
@@ -14,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || 'codex/issue-28-installer' }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
