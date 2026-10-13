@@ -11,7 +11,7 @@ describe.skipIf(process.platform !== "win32")("native bootstrap cache guard", ()
     const workspace = mkdtempSync(join(base, "guard-"));
     const cache = join(workspace, "RimePredictInstaller");
     const outside = join(workspace, "outside");
-    const guard = (root: string) => spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-File",
+    const guard = (root: string) => spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
       resolve("tools/installer/cache-guard.ps1"), "-Root", root], {
       env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== "programdata")),
         ProgramData: workspace }, windowsHide: true, encoding: "utf8",

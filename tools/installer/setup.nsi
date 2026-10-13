@@ -90,7 +90,7 @@ Section "Install"
   InitPluginsDir
   SetOutPath "$PLUGINSDIR"
   File "cache-guard.ps1"
-  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -File "$PLUGINSDIR\cache-guard.ps1" -Root "$BootRoot"'
+  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\cache-guard.ps1" -Root "$BootRoot"'
   Pop $0
   Pop $1
   ${If} $0 != 0
@@ -149,7 +149,7 @@ Function un.onInit
   InitPluginsDir
   SetOutPath "$PLUGINSDIR"
   File "cache-guard.ps1"
-  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -File "$PLUGINSDIR\cache-guard.ps1" -Root "$BootRoot"'
+  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\cache-guard.ps1" -Root "$BootRoot"'
   Pop $0
   Pop $1
   ${If} $0 != 0
