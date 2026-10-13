@@ -1,0 +1,8 @@
+# 产物与工具链只在本地，不入库（原型脚本与报告入库）
+artifacts/
+build/
+toolchain/
+node_modules/
+helper.exe
+*.blob
+build-log.txt

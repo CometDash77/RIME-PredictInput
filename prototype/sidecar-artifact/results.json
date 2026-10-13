@@ -1,0 +1,1194 @@
+{
+  "startedAt": "2026-10-07T05:10:44.139Z",
+  "forms": {
+    "node-baseline": {
+      "sizeBytes": 86989128,
+      "sizeMB": "83.0MB",
+      "subsystem": 3,
+      "runtime": "node v22.23.1",
+      "ffi": true
+    },
+    "sea": {
+      "sizeBytes": 87120896,
+      "sizeMB": "83.1MB",
+      "subsystem": 3,
+      "runtime": "node v22.23.1",
+      "ffi": "no: No such built-in module: koffi"
+    },
+    "sea-gui": {
+      "sizeBytes": 87120896,
+      "sizeMB": "83.1MB",
+      "subsystem": 2,
+      "runtime": "node v22.23.1",
+      "ffi": "no: No such built-in module: koffi"
+    },
+    "bun": {
+      "sizeBytes": 86091776,
+      "sizeMB": "82.1MB",
+      "subsystem": 3,
+      "runtime": "bun 1.4.2",
+      "ffi": true
+    },
+    "bun-gui": {
+      "sizeBytes": 86091776,
+      "sizeMB": "82.1MB",
+      "subsystem": 2,
+      "runtime": "bun 1.4.2",
+      "ffi": true
+    },
+    "deno": {
+      "sizeBytes": 108581232,
+      "sizeMB": "103.6MB",
+      "subsystem": 3,
+      "runtime": "deno 2.9.7",
+      "ffi": true
+    },
+    "deno-gui": {
+      "sizeBytes": 108581232,
+      "sizeMB": "103.6MB",
+      "subsystem": 2,
+      "runtime": "deno 2.9.7",
+      "ffi": true
+    },
+    "pkg": {
+      "sizeBytes": 84142215,
+      "sizeMB": "80.2MB",
+      "subsystem": 3,
+      "runtime": "node v22.23.2",
+      "ffi": true
+    },
+    "pkg-gui": {
+      "sizeBytes": 84142215,
+      "sizeMB": "80.2MB",
+      "subsystem": 2,
+      "runtime": "node v22.23.2",
+      "ffi": true
+    }
+  },
+  "flash": {
+    "node-baseline": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "sea": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "sea-gui": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "bun": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "bun-gui": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "deno": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "deno-gui": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "pkg": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    },
+    "pkg-gui": {
+      "none": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      },
+      "no-window": {
+        "baseline": 0,
+        "during": 0,
+        "flash": 0,
+        "spawnError": null
+      }
+    }
+  },
+  "childWindow": {
+    "node-baseline": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "sea": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "sea-gui": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "bun": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "bun-gui": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "deno": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "deno-gui": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      }
+    ],
+    "pkg": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ],
+    "pkg-gui": [
+      {
+        "parentFlags": "no-window",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "no-window",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "default",
+        "childAttached": true,
+        "childVisible": true,
+        "note": null
+      },
+      {
+        "parentFlags": "detached",
+        "childMode": "hide",
+        "childAttached": false,
+        "childVisible": false,
+        "note": null
+      }
+    ]
+  },
+  "coldStart": {
+    "node-baseline": {
+      "readyAll10": true,
+      "p50": 313,
+      "p95": 326,
+      "min": 298,
+      "max": 326,
+      "runs": [
+        314,
+        326,
+        314,
+        306,
+        313,
+        316,
+        314,
+        298,
+        312,
+        313
+      ]
+    },
+    "sea": {
+      "readyAll10": true,
+      "p50": 315,
+      "p95": 344,
+      "min": 300,
+      "max": 344,
+      "runs": [
+        328,
+        332,
+        344,
+        331,
+        316,
+        314,
+        315,
+        300,
+        315,
+        311
+      ]
+    },
+    "sea-gui": {
+      "readyAll10": true,
+      "p50": 293,
+      "p95": 298,
+      "min": 286,
+      "max": 298,
+      "runs": [
+        298,
+        298,
+        292,
+        286,
+        295,
+        291,
+        295,
+        287,
+        294,
+        293
+      ]
+    },
+    "bun": {
+      "readyAll10": true,
+      "p50": 269,
+      "p95": 273,
+      "min": 263,
+      "max": 273,
+      "runs": [
+        268,
+        273,
+        271,
+        269,
+        263,
+        269,
+        268,
+        269,
+        269,
+        268
+      ]
+    },
+    "bun-gui": {
+      "readyAll10": true,
+      "p50": 255,
+      "p95": 259,
+      "min": 254,
+      "max": 259,
+      "runs": [
+        259,
+        255,
+        254,
+        255,
+        254,
+        258,
+        255,
+        254,
+        256,
+        254
+      ]
+    },
+    "deno": {
+      "readyAll10": true,
+      "p50": 296,
+      "p95": 312,
+      "min": 290,
+      "max": 312,
+      "runs": [
+        296,
+        295,
+        300,
+        296,
+        312,
+        295,
+        308,
+        298,
+        290,
+        302
+      ]
+    },
+    "deno-gui": {
+      "readyAll10": true,
+      "p50": 283,
+      "p95": 296,
+      "min": 280,
+      "max": 296,
+      "runs": [
+        280,
+        295,
+        281,
+        283,
+        283,
+        293,
+        296,
+        280,
+        292,
+        283
+      ]
+    },
+    "pkg": {
+      "readyAll10": true,
+      "p50": 313,
+      "p95": 324,
+      "min": 307,
+      "max": 324,
+      "runs": [
+        324,
+        315,
+        309,
+        313,
+        313,
+        321,
+        309,
+        319,
+        307,
+        312
+      ]
+    },
+    "pkg-gui": {
+      "readyAll10": true,
+      "p50": 298,
+      "p95": 311,
+      "min": 294,
+      "max": 311,
+      "runs": [
+        294,
+        298,
+        311,
+        298,
+        294,
+        298,
+        297,
+        306,
+        305,
+        307
+      ]
+    }
+  },
+  "memory": {
+    "node-baseline": {
+      "ws": 44933120,
+      "private": 19673088
+    },
+    "sea": {
+      "ws": 39292928,
+      "private": 21504000
+    },
+    "sea-gui": {
+      "ws": 39137280,
+      "private": 21422080
+    },
+    "bun": {
+      "ws": 21979136,
+      "private": 90144768
+    },
+    "bun-gui": {
+      "ws": 21753856,
+      "private": 83623936
+    },
+    "deno": {
+      "ws": 34979840,
+      "private": 18956288
+    },
+    "deno-gui": {
+      "ws": 34947072,
+      "private": 18751488
+    },
+    "pkg": {
+      "ws": 39649280,
+      "private": 24289280
+    },
+    "pkg-gui": {
+      "ws": 42340352,
+      "private": 23564288
+    }
+  },
+  "exitBlock": {
+    "node-baseline": {
+      "exitblock-natural": {
+        "ms": 5011,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 104,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 97,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "sea": {
+      "exitblock-natural": {
+        "ms": 5012,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 99,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 98,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "sea-gui": {
+      "exitblock-natural": {
+        "ms": 5028,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 135,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 182,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "bun": {
+      "exitblock-natural": {
+        "ms": 5006,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 576,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 117,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "bun-gui": {
+      "exitblock-natural": {
+        "ms": 5020,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 93,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 112,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "deno": {
+      "exitblock-natural": {
+        "ms": 5017,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 115,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 89,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "deno-gui": {
+      "exitblock-natural": {
+        "ms": 5022,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 137,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 142,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "pkg": {
+      "exitblock-natural": {
+        "ms": 5020,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 108,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 106,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    },
+    "pkg-gui": {
+      "exitblock-natural": {
+        "ms": 5014,
+        "blocked": true,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "exitblock-unref": {
+        "ms": 146,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      },
+      "exitblock-exit": {
+        "ms": 287,
+        "blocked": false,
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  "lock": {
+    "node-baseline": {
+      "first": {
+        "runtime": "node v22.23.1",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 47896
+      },
+      "second": {
+        "runtime": "node v22.23.1",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "sea": {
+      "first": {
+        "runtime": "node v22.23.1",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 43460
+      },
+      "second": {
+        "runtime": "node v22.23.1",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "sea-gui": {
+      "first": {
+        "runtime": "node v22.23.1",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 46888
+      },
+      "second": {
+        "runtime": "node v22.23.1",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "bun": {
+      "first": {
+        "runtime": "bun 1.4.2",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 40108
+      },
+      "second": {
+        "runtime": "bun 1.4.2",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "bun-gui": {
+      "first": {
+        "runtime": "bun 1.4.2",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 30136
+      },
+      "second": {
+        "runtime": "bun 1.4.2",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "deno": {
+      "first": {
+        "runtime": "deno 2.9.7",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 30380
+      },
+      "second": {
+        "runtime": "deno 2.9.7",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "deno-gui": {
+      "first": {
+        "runtime": "deno 2.9.7",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 6044
+      },
+      "second": {
+        "runtime": "deno 2.9.7",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "pkg": {
+      "first": {
+        "runtime": "node v22.23.2",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 12024
+      },
+      "second": {
+        "runtime": "node v22.23.2",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    },
+    "pkg-gui": {
+      "first": {
+        "runtime": "node v22.23.2",
+        "acquired": true,
+        "selfAlive": true,
+        "pid": 3284
+      },
+      "second": {
+        "runtime": "node v22.23.2",
+        "eexist": true,
+        "prevAlive": true
+      },
+      "pass": true
+    }
+  },
+  "copydata": {
+    "node-baseline": {
+      "sender": {
+        "runtime": "node v22.23.1",
+        "ffi": "koffi",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "(node:34252) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 22,
+        "ok": true
+      }
+    },
+    "sea": {
+      "sender": {
+        "runtime": "node v22.23.1",
+        "ffi": "koffi",
+        "error": "No such built-in module: koffi"
+      },
+      "stderr": "(node:5556) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `probe-sea --trace-warnings ...` to show where the warning was created)\n",
+      "received": null
+    },
+    "sea-gui": {
+      "sender": {
+        "runtime": "node v22.23.1",
+        "ffi": "koffi",
+        "error": "No such built-in module: koffi"
+      },
+      "stderr": "(node:6648) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `probe-sea-gui --trace-warnings ...` to show where the warning was created)\n",
+      "received": null
+    },
+    "bun": {
+      "sender": {
+        "runtime": "bun 1.4.2",
+        "ffi": "bun:ffi",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 12,
+        "ok": true
+      }
+    },
+    "bun-gui": {
+      "sender": {
+        "runtime": "bun 1.4.2",
+        "ffi": "bun:ffi",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 16,
+        "ok": true
+      }
+    },
+    "deno": {
+      "sender": {
+        "runtime": "deno 2.9.7",
+        "ffi": "Deno.dlopen",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 13,
+        "ok": true
+      }
+    },
+    "deno-gui": {
+      "sender": {
+        "runtime": "deno 2.9.7",
+        "ffi": "Deno.dlopen",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 17,
+        "ok": true
+      }
+    },
+    "pkg": {
+      "sender": {
+        "runtime": "node v22.23.2",
+        "ffi": "koffi",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "(node:35248) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `probe-pkg --trace-warnings ...` to show where the warning was created)\n",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 12,
+        "ok": true
+      }
+    },
+    "pkg-gui": {
+      "sender": {
+        "runtime": "node v22.23.2",
+        "ffi": "koffi",
+        "found": true,
+        "sent": true,
+        "delivered": "1"
+      },
+      "stderr": "(node:25768) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `probe-pkg-gui --trace-warnings ...` to show where the warning was created)\n",
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 16,
+        "ok": true
+      }
+    },
+    "ps-bridge": {
+      "sender": {
+        "found": true,
+        "sent": true,
+        "delivered": 1
+      },
+      "ms": 333,
+      "received": {
+        "dwData": 1380994353,
+        "cbData": 18,
+        "ok": true
+      }
+    }
+  },
+  "selftest": {
+    "baseline": {
+      "status": "ok",
+      "checks": [
+        "policy identity matches the frozen evidence",
+        "settings file round trip",
+        "runtime rejects a malformed request envelope",
+        "file ipc request/response round trip",
+        "runtime pumps one request and writes status/log",
+        "runtime exits when idle and reports stopped",
+        "settings wire shape is stable"
+      ],
+      "ms": null
+    },
+    "sea": {
+      "code": 0,
+      "status": "ok",
+      "checksOk": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "checksMatch": true,
+      "ms": 355,
+      "stderr": "(node:22808) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `rime-sea --trace-warnings ...` to show where the warning was created)\n"
+    },
+    "sea-gui": {
+      "code": 0,
+      "status": "ok",
+      "checksOk": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "checksMatch": true,
+      "ms": 292,
+      "stderr": "(node:26068) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `rime-sea-gui --trace-warnings ...` to show where the warning was created)\n"
+    },
+    "bun": {
+      "code": 0,
+      "status": "ok",
+      "checksOk": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "checksMatch": true,
+      "ms": 440,
+      "stderr": ""
+    },
+    "deno": {
+      "code": 0,
+      "status": "ok",
+      "checksOk": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "checksMatch": true,
+      "ms": 381,
+      "stderr": ""
+    },
+    "pkg": {
+      "code": 0,
+      "status": "ok",
+      "checksOk": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "checksMatch": true,
+      "ms": 284,
+      "stderr": "(node:27600) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `rime-pkg --trace-warnings ...` to show where the warning was created)\n"
+    }
+  }
+}

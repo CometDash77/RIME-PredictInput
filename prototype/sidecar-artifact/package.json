@@ -1,0 +1,8 @@
+{
+  "name": "rime-proto-sidecar-artifact",
+  "private": true,
+  "description": "PROTOTYPE measurement harness deps for issue #9 - throwaway, do not publish",
+  "dependencies": {
+    "koffi": "^2.12.0"
+  }
+}
