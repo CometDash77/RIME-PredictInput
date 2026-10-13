@@ -41,11 +41,10 @@ jobs:
       - name: Stage release documents
         run: pnpm run release:stage
 
-      - name: NSIS 3.10 (sourceforge zip, hash checked by build.mjs)
+      - name: NSIS 3.10 (vendored zip, hash checked by build.mjs)
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri 'https://downloads.sourceforge.net/project/nsis/NSIS%203/3.10/nsis-3.10.zip' -OutFile nsis.zip -MaximumRedirection 10
-          Expand-Archive nsis.zip -DestinationPath nsis
+          Expand-Archive tools\installer\nsis-3.10.zip -DestinationPath nsis
           & nsis\nsis-3.10\makensis.exe /VERSION
 
       - name: 7-Zip from fork tag (hash checked by pin-fork.mjs/build.mjs)
