@@ -39,7 +39,7 @@ const toolchain = JSON.parse(readFileSync(path.join(root,"tools/installer/toolch
 if (hash(readFileSync(sevenzip)) !== toolchain.sevenzip.exeSha256
     || hash(readFileSync(path.join(path.dirname(sevenzip),"7z.dll"))) !== toolchain.sevenzip.dllSha256) throw new Error("7-Zip tool hash mismatch");
 const entries = [
-  ["frontend", "weaselx64.dll"], ["frontend-x86", "weasel.dll"],
+  ["frontend", "weaselx64.dll"], ["frontend-x86", "Win32/weasel.dll"],
   ["setup", "WeaselSetup.exe"], ["server", "WeaselServer.exe"], ["rime", "rime.dll"],
   ["deployer", "WeaselDeployer.exe"], ["winsparkle", "WinSparkle.dll"],
   ["fork-license", "LICENSE.txt"], ["fork-readme", "README.txt"],
@@ -47,7 +47,7 @@ const entries = [
 ];
 const temp = path.join(root,`build/installer/pin-${Date.now()}`);
 mkdirSync(temp,{recursive:true});
-run(sevenzip,["x","-y",`-o${temp}`,archive,...entries.map(([,name])=>name)]);
+run(sevenzip,["x","-y",`-o${temp}`,payloadZip,...entries.map(([,p])=>p)]);
 const files = entries.map(([role,name])=>{
   const data = readFileSync(path.join(temp,name));
   return {role,path:name,bytes:data.length,sha256:hash(data)};

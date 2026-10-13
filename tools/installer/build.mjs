@@ -21,6 +21,7 @@ for (let i = 2; i < process.argv.length; i++) {
 }
 const required = key => { const value = args.get(key); if (!value) throw new Error(`Missing ${key}`); return path.resolve(value); };
 const archive = required("--fork-archive");
+const payloadZip = required("--payload-zip");
 const lock = JSON.parse(readFileSync(required("--fork-lock"), "utf8"));
 const makensis = required("--makensis");
 const sevenzip = required("--sevenzip");
@@ -37,6 +38,8 @@ for (const [file, expected] of [[makensis, toolchain.nsis.compilerSha256], [seve
 if (!run(makensis, ["/VERSION"]).trim().endsWith("3.10")) throw new Error("NSIS version mismatch");
 const archiveBytes = readFileSync(archive);
 if (hash(archiveBytes) !== lock.sha256 || archiveBytes.length !== lock.bytes) throw new Error("Fork archive hash/size mismatch");
+const payloadBytes = readFileSync(payloadZip);
+if (hash(payloadBytes) !== lock.payloadSha256 || payloadBytes.length !== lock.payloadBytes) throw new Error("Fork payload zip hash/size mismatch");
 if (!candidate && (lock.releaseVerified !== true || lock.draft !== false || lock.prerelease !== false || !Number.isSafeInteger(lock.assetId))) {
   throw new Error("A verified published fork release receipt is required; local output is not a release");
 }
@@ -60,7 +63,7 @@ for (const f of lock.files) {
   if (typeof f.path !== "string" || !/^[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(f.path)
       || f.path.split("/").some(s => s === "." || s === "..") || !/^[a-f0-9]{64}$/.test(f.sha256)) throw new Error("Unsafe fork lock entry");
 }
-run(sevenzip, ["x", "-y", `-o${extracted}`, archive, ...lock.files.map(f => f.path)]);
+run(sevenzip, ["x", "-y", `-o${extracted}`, payloadZip, ...lock.files.map(f => f.path)]);
 const files = [];
 function stage(role, source, origin, destination, name = path.basename(source), expected = undefined) {
   const bytes = readFileSync(source);
