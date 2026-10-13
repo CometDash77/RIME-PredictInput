@@ -19,11 +19,12 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 
-import { compact, type JsonValue } from "../json/canonical.js";
+import { compact, defaultSeparators, type JsonValue } from "../json/canonical.js";
 import { ChatResponseSchema } from "../contracts/ollama-wire.js";
 import { SAMPLING_OPTIONS } from "../contracts/policy.js";
 import { isPlainPinyin, isSegmentable, readingMatches, segmentations } from "../domain/syllables.js";
-import { buildLexicon, type Lexicon } from "./dicts.js";
+import { generationQueryObject } from "../contracts/generation.js";
+import { buildLexicon, completeCandidates, type Lexicon } from "./dicts.js";
 import { checkFrozen } from "./build-holdout.js";
 
 export type SampleCategory = "hit" | "wrong" | "blank" | "mechanical" | "unsup" | "error";
@@ -104,7 +105,7 @@ export interface TransportFailure {
 export type TransportOutcome = TransportResult | TransportFailure;
 
 export interface Transport {
-  call(sample: FrozenSample, arm: ArmConfig): Promise<TransportOutcome>;
+  call(sample: FrozenSample, arm: ArmConfig, candidates: readonly string[]): Promise<TransportOutcome>;
   close(): Promise<void>;
 }
 
@@ -113,7 +114,10 @@ export interface ArmConfig {
   readonly response_kind: "raw" | "json-text-field";
   readonly system: string;
   readonly user_template: string;
-  readonly options?: Partial<typeof SAMPLING_OPTIONS>;
+  /** v3 臂：主 schema 权重序 top-N 候选窗进请求（与运行时同形）；缺席 = 不带候选。 */
+  readonly candidates_window?: number;
+  /** 覆盖请求 options：数值同形即可（temperature/seed/num_predict/num_ctx），不必是选择策略的子集。 */
+  readonly options?: Partial<{ temperature: number; seed: number; num_predict: number; num_ctx: number }>;
   readonly transport:
     | { readonly kind: "http"; readonly endpoint: string }
     | { readonly kind: "fixture"; readonly file: string };
@@ -121,8 +125,26 @@ export interface ArmConfig {
 
 const USER_DEFAULT_TEMPLATE = "上文：{context}\n待转换拼音：{pinyin}\n合法音节切分：{segments}\n只输出该拼音对应的词语。";
 
-export function renderUserContent(sample: FrozenSample, arm: ArmConfig): string {
+/** user_template 哨兵：user 内容 = 运行时同形的查询 JSON（defaultSeparators 编码）。 */
+export const QUERY_JSON_SENTINEL = "@query-json";
+
+/** v3 候选窗：主 schema（manifest schemas 首个）冻结口径的权重序 top-N 词条。 */
+export function candidatesForWindow(bundle: FrozenBundle, sample: FrozenSample, arm: ArmConfig): readonly string[] {
+  if (arm.candidates_window === undefined) return [];
+  const primary = bundle.lexicons[Object.keys(bundle.lexicons)[0] as string] as Lexicon;
+  return completeCandidates(primary, sample.pinyin)
+    .slice(0, arm.candidates_window)
+    .map((candidate) => candidate.text);
+}
+
+export function renderUserContent(sample: FrozenSample, arm: ArmConfig, candidates: readonly string[]): string {
   const template = arm.user_template ?? USER_DEFAULT_TEMPLATE;
+  if (template === QUERY_JSON_SENTINEL) {
+    return defaultSeparators(generationQueryObject(
+      { pinyin: sample.pinyin, precedingText: sample.precedingText },
+      candidates,
+    ));
+  }
   const segs = segmentations(sample.pinyin)
     .map((s) => s.join("'"))
     .join(" / ");
@@ -134,19 +156,32 @@ export function renderUserContent(sample: FrozenSample, arm: ArmConfig): string 
 
 /** 本地兼容（Ollama /api/chat）HTTP 传输；#13 的真实模型实验走这里。 */
 export class HttpTransport implements Transport {
-  async call(sample: FrozenSample, arm: ArmConfig): Promise<TransportOutcome> {
+  async call(sample: FrozenSample, arm: ArmConfig, candidates: readonly string[]): Promise<TransportOutcome> {
     const started = Date.now();
-    const body = {
+    const body: Record<string, unknown> = {
       model: arm.model,
       stream: false,
       // Qwen3.5 系默认开思考：与产品决策路径及 Q5 白名单一致，评测请求必须显式关闭。
       think: false,
       messages: [
         { role: "system", content: arm.system },
-        { role: "user", content: renderUserContent(sample, arm) },
+        { role: "user", content: renderUserContent(sample, arm, candidates) },
       ],
       options: { ...SAMPLING_OPTIONS, ...(arm.options ?? {}) },
     };
+    if (arm.response_kind === "json-text-field") {
+      // 响应枚举 = 本次候选词（Ollama JSON schema → GBNF），与运行时 format 同构；
+      // 没有候选窗的 json-text-field 臂是配置错误，显式失败而不是静默降级。
+      if (candidates.length === 0) {
+        return { kind: "failure", code: "candidates_missing", latencyMs: Date.now() - started };
+      }
+      body["format"] = {
+        type: "object",
+        properties: { text: { type: "string", enum: [...candidates] } },
+        required: ["text"],
+        additionalProperties: false,
+      };
+    }
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 120_000);
@@ -189,7 +224,7 @@ export class FixtureTransport implements Transport {
     return new FixtureTransport(raw);
   }
 
-  async call(sample: FrozenSample, _arm: ArmConfig): Promise<TransportOutcome> {
+  async call(sample: FrozenSample, _arm: ArmConfig, _candidates: readonly string[]): Promise<TransportOutcome> {
     const started = Date.now();
     const entry = this.table[sample.id];
     if (entry === undefined || entry === null) return { kind: "failure", code: "fixture_missing", latencyMs: 0 };
@@ -319,7 +354,8 @@ export async function evaluateOnce(bundle: FrozenBundle, arm: ArmConfig, schemaN
     ) {
       outcome = { id: sample.id, category: "unsup", output: "", latencyMs: 0 };
     } else {
-      const raw = await transport.call(sample, arm);
+      const candidates = candidatesForWindow(bundle, sample, arm);
+      const raw = await transport.call(sample, arm, candidates);
       outcome = scoreSample(sample, raw, arm, primaryLexicon);
     }
     if (outcome.category !== "unsup") {

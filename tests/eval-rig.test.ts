@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 import {
   FixtureTransport,
   HttpTransport,
+  QUERY_JSON_SENTINEL,
+  candidatesForWindow,
   extractOutput,
   judgeVerdict,
   scoreSample,
@@ -184,11 +186,11 @@ describe("judgeVerdict", () => {
 describe("FixtureTransport", () => {
   it("按 id 返回确定内容，缺失记 fixture_missing", async () => {
     const transport: Transport = new FixtureTransport({ s1: "拟好", s2: { error: "timeout" } });
-    const hit = await transport.call(generationSample({ id: "s1" }), ARM);
+    const hit = await transport.call(generationSample({ id: "s1" }), ARM, []);
     expect(hit).toEqual({ kind: "ok", content: "拟好", latencyMs: expect.any(Number) });
-    const err = await transport.call(generationSample({ id: "s2" }), ARM);
+    const err = await transport.call(generationSample({ id: "s2" }), ARM, []);
     expect(err).toEqual({ kind: "failure", code: "timeout", latencyMs: expect.any(Number) });
-    const missing = await transport.call(generationSample({ id: "s3" }), ARM);
+    const missing = await transport.call(generationSample({ id: "s3" }), ARM, []);
     expect(missing).toEqual({ kind: "failure", code: "fixture_missing", latencyMs: 0 });
   });
 });
@@ -218,7 +220,7 @@ describe("HttpTransport", () => {
       const outcome = await transport.call(generationSample(), {
         ...ARM,
         transport: { kind: "http", endpoint: `http://127.0.0.1:${address.port}` },
-      });
+      }, []);
       expect(outcome).toEqual({ kind: "ok", content: "拟好", latencyMs: expect.any(Number) });
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -232,5 +234,77 @@ describe("HttpTransport", () => {
     expect(messages[0]?.role).toBe("system");
     expect(messages[0]?.content).toBe("test");
     expect(messages[1]?.content).toBe("上文：前文\n拼音：nihao");
+  });
+});
+
+describe("候选窗与 v2 请求形状（#34 协议 v2）", () => {
+  const bundle = {
+    samples: [],
+    manifest: {},
+    lexicons: { "rime-ice": LEXICON },
+    primaryReadings: LEXICON.charReadings,
+  };
+
+  it("candidatesForWindow 按权重降序取 top-N", () => {
+    const arm: ArmConfig = { ...ARM, candidates_window: 1 };
+    expect(candidatesForWindow(bundle, generationSample(), arm)).toEqual(["你好"]);
+    const arm2: ArmConfig = { ...ARM, candidates_window: 255 };
+    expect(candidatesForWindow(bundle, generationSample(), arm2)).toEqual(["你好", "拟好"]);
+    const arm3: ArmConfig = { ...ARM };
+    expect(candidatesForWindow(bundle, generationSample(), arm3)).toEqual([]);
+  });
+
+  it("v2 臂：user 内容是运行时同形查询 JSON，format 枚举=候选窗", async () => {
+    const { createServer } = await import("node:http");
+    const bodies: unknown[] = [];
+    const server = createServer((request, response) => {
+      let raw = "";
+      request.on("data", (chunk: Buffer) => { raw += chunk.toString("utf8"); });
+      request.on("end", () => {
+        bodies.push(JSON.parse(raw) as unknown);
+        response.setHeader("content-type", "application/json");
+        response.end(JSON.stringify({ model: "m", done: true, done_reason: "stop", message: { role: "assistant", content: '{"text":"拟好"}' } }));
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (address === null || typeof address === "string") throw new Error("no listen port");
+    const transport: Transport = new HttpTransport();
+    const arm: ArmConfig = {
+      ...ARM,
+      response_kind: "json-text-field",
+      candidates_window: 255,
+      user_template: QUERY_JSON_SENTINEL,
+      options: { temperature: 0, seed: 19, num_predict: 48, num_ctx: 4096 },
+      transport: { kind: "http", endpoint: `http://127.0.0.1:${address.port}` },
+    };
+    const candidates = candidatesForWindow(bundle, generationSample(), arm);
+    try {
+      const outcome = await transport.call(generationSample(), arm, candidates);
+      expect(outcome).toEqual({ kind: "ok", content: '{"text":"拟好"}', latencyMs: expect.any(Number) });
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+    const body = bodies[0] as Record<string, unknown>;
+    expect(body["options"]).toEqual({ temperature: 0, seed: 19, num_predict: 48, num_ctx: 4096 });
+    expect(body["format"]).toEqual({
+      type: "object",
+      properties: { text: { type: "string", enum: ["你好", "拟好"] } },
+      required: ["text"],
+      additionalProperties: false,
+    });
+    const messages = body["messages"] as { role: string; content: string }[];
+    const query = JSON.parse(messages[1]!.content) as Record<string, unknown>;
+    expect(Object.keys(query)).toEqual(["protocol", "raw_input", "preceding_text", "reference_pinyin", "candidates"]);
+    expect(query["raw_input"]).toBe("nihao");
+    expect(query["preceding_text"]).toBe("前文");
+    expect(query["candidates"]).toEqual(["你好", "拟好"]);
+  });
+
+  it("json-text-field 臂缺候选窗是配置错误：显式 failure", async () => {
+    const transport: Transport = new HttpTransport();
+    const arm: ArmConfig = { ...ARM, response_kind: "json-text-field" };
+    const outcome = await transport.call(generationSample(), arm, []);
+    expect(outcome).toEqual({ kind: "failure", code: "candidates_missing", latencyMs: expect.any(Number) });
   });
 });

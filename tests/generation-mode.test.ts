@@ -13,11 +13,11 @@ import type { RequestEnvelope } from "../src/contracts/envelope.js";
 import { parseRequest } from "../src/contracts/envelope.js";
 import {
   GENERATION_POLICY_DIGEST,
-  GENERATION_RESPONSE_FORMAT,
   GENERATION_SAMPLING_OPTIONS,
   GENERATION_SYSTEM_PROMPT,
   generationCloudIdentityFor,
   generationIdentityFor,
+  generationResponseFormat,
 } from "../src/contracts/generation.js";
 import { cloudIdentityFor, identityFor } from "../src/contracts/policy.js";
 import { decisionInputFromPayload, type DecisionInput } from "../src/domain/decision.js";
@@ -145,7 +145,7 @@ const jsonBody = (call: RecordedCall): Record<string, unknown> => {
 };
 
 describe("本地原生通道的生成模式", () => {
-  it("请求体走冻结的生成策略：无候选列表、text 格式、256 生成上限", async () => {
+  it("请求体走协议 v2：候选窗进 query、text 枚举=候选、48 生成上限", async () => {
     const { backend, transport } = localBackend();
     await primeInventory(transport);
     await backend.modelInventory();
@@ -169,15 +169,15 @@ describe("本地原生通道的生成模式", () => {
 
     const body = jsonBody(transport.callsFor("POST", OLLAMA_BASE_URL + "/api/chat")[0] as RecordedCall);
     expect(Object.keys(body)).toEqual(["model", "stream", "think", "keep_alive", "messages", "format", "options"]);
-    expect(body["format"]).toEqual(GENERATION_RESPONSE_FORMAT);
+    expect(body["format"]).toEqual(generationResponseFormat(["电影", "电源"]));
     expect(body["options"]).toEqual(GENERATION_SAMPLING_OPTIONS);
     const messages = body["messages"] as { role: string; content: string }[];
     expect(messages[0]?.content).toBe(GENERATION_SYSTEM_PROMPT);
     const query = JSON.parse(messages[1]?.content ?? "{}") as Record<string, unknown>;
-    expect(Object.keys(query)).toEqual(["protocol", "raw_input", "preceding_text", "reference_pinyin"]);
+    expect(Object.keys(query)).toEqual(["protocol", "raw_input", "preceding_text", "reference_pinyin", "candidates"]);
     expect(query["raw_input"]).toBe("dianying");
-    // 生成请求里绝不放候选列表：放了就退化成选择，质量口径也会失真。
-    expect(messages[1]?.content).not.toContain("candidates");
+    // 协议 v2（#34）：候选窗进请求、响应 text 枚举=本次候选词。
+    expect(query["candidates"]).toEqual(["电影", "电源"]);
   });
 
   it("模型显式返回 null 时安全留空", async () => {
