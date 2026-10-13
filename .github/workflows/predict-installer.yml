@@ -1,0 +1,91 @@
+name: Predict Installer CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch containing the S9 installer implementation
+        required: false
+        default: codex/issue-28-installer
+
+jobs:
+  build-installer:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    env:
+      FORK_TAG: predict-0.17.4.3
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || 'codex/issue-28-installer' }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build sidecar exe (dist -> bundle -> pkg -> selftest)
+        run: pnpm run build:exe
+
+      - name: Stage release documents
+        run: pnpm run release:stage
+
+      - name: NSIS 3.10 (vendored zip, hash checked by build.mjs)
+        shell: pwsh
+        run: |
+          Expand-Archive tools\installer\nsis-3.10.zip -DestinationPath nsis
+          & nsis\nsis-3.10\makensis.exe /VERSION
+
+      - name: 7-Zip from fork tag (hash checked by pin-fork.mjs/build.mjs)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path sevenzip | Out-Null
+          $b = 'https://raw.githubusercontent.com/CometDash77/weasel/' + $env:FORK_TAG + '/output'
+          Invoke-WebRequest -Uri ($b + '/7z.exe') -OutFile sevenzip\7z.exe
+          Invoke-WebRequest -Uri ($b + '/7z.dll') -OutFile sevenzip\7z.dll
+
+      - name: Download fork release assets (installer + payload zip)
+        shell: pwsh
+        run: |
+          gh release download $env:FORK_TAG -R CometDash77/weasel --pattern 'weasel-0.17.4-predict.3-installer.exe' --pattern 'predict-x64-payload.zip' --clobber
+          (Get-FileHash weasel-0.17.4-predict.3-installer.exe -Algorithm SHA256).Hash.ToLower()
+          (Get-FileHash predict-x64-payload.zip -Algorithm SHA256).Hash.ToLower()
+
+      - name: Pin fork release provenance
+        shell: pwsh
+        run: |
+          node tools/installer/pin-fork.mjs --tag $env:FORK_TAG --archive weasel-0.17.4-predict.3-installer.exe --payload-zip predict-x64-payload.zip --sevenzip sevenzip\7z.exe --output build/installer/fork-lock.json
+
+      - name: Test suite
+        run: pnpm run verify
+
+      - name: Build installer (pinned inputs only)
+        shell: pwsh
+        run: |
+          node tools/installer/build.mjs --fork-archive weasel-0.17.4-predict.3-installer.exe --payload-zip predict-x64-payload.zip --fork-lock build/installer/fork-lock.json --makensis nsis\nsis-3.10\makensis.exe --sevenzip sevenzip\7z.exe --vcvarsall 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
+
+      - name: Settings GUI smoke
+        run: node tools/installer/smoke-settings.mjs
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: predict-installer
+          path: |
+            build/installer/rime-predict-*-setup.exe
+            build/installer/build-report.json
+            build/installer/manifest.json
+            build/installer/fork-lock.json
+            build/smoke-settings-*/report.json
+          if-no-files-found: error

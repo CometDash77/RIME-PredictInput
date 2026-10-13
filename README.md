@@ -43,6 +43,7 @@ pnpm release:check -- --tag v0.1.0     # 必须 PASS，否则不许发布
 - 重构过程与剩余技术债：[docs/refactor-record.md](./docs/refactor-record.md)
 - 架构决定：[docs/adr/](./docs/adr/)
 - 发布合规（许可证、凭据扫描、Release notes 模板）：[docs/adr/0009-release-compliance-gate.md](./docs/adr/0009-release-compliance-gate.md)
+- 安装器构建与当前限制：[docs/installer-build.md](./docs/installer-build.md)；正式 fork release 输入与 S11 真机验收尚待完成，工程候选禁用安装。
 - 工作区约定、Issue tracker、域文档：[AGENTS.md](./AGENTS.md) 与 `docs/agents/`
 - 产品目标与必须保持的行为：GitHub Issue tracker 中的 map issue
 - 旧实现与运行证据：`reference/`（本地材料，不随仓库发布）
