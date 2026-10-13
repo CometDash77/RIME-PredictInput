@@ -4,7 +4,8 @@ import { resolve, join, sep } from "node:path";
 import { describe, expect, test } from "vitest";
 
 describe.skipIf(process.platform !== "win32")("native bootstrap cache guard", () => {
-  test("accepts a private cache and rejects descendants redirected outside it", () => {
+  // ponytail: 3x powershell spawn is slow on CI runners; 60s covers cold start.
+  test("accepts a private cache and rejects descendants redirected outside it", { timeout: 60_000 }, () => {
     const base = resolve("build/bootstrap-test");
     mkdirSync(base, { recursive: true });
     const workspace = mkdtempSync(join(base, "guard-"));
