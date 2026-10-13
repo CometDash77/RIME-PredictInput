@@ -26,6 +26,7 @@ import {
   generationQuery,
   generationRequestBody,
   generationRequestWire,
+  generationResponseFormat,
   isEligibleGenerationIdentity,
   parseGenerationAnswer,
   parseGenerationText,
@@ -156,7 +157,7 @@ describe("词库内生成校验", () => {
 });
 
 describe("生成请求的线上形状", () => {
-  it("查询只带协议、拼音与音节切分，不带候选列表", () => {
+  it("查询带协议、拼音、音节切分与候选窗（协议 v2，#34）", () => {
     expect(generationQuery(dianying)).toEqual({
       protocol: GENERATION_PROTOCOL,
       raw_input: "dianying",
@@ -167,6 +168,8 @@ describe("生成请求的线上形状", () => {
         ["di", "an", "ying"],
         ["dian", "ying"],
       ],
+      // 协议 v2：候选列表进请求（权重序窗），响应枚举以它为唯一自由度。
+      candidates: ["电影", "电源"],
     });
   });
 
@@ -176,12 +179,7 @@ describe("生成请求的线上形状", () => {
     if (!body.ok) return;
     expect(body.value.messages[0]).toEqual({ role: "system", content: GENERATION_SYSTEM_PROMPT });
     expect(body.value.messages[1].content).toBe(defaultSeparators(generationQuery(dianying)));
-    expect(body.value.format).toEqual({
-      type: "object",
-      properties: { text: { type: ["string", "null"], minLength: 1, maxLength: 32 } },
-      required: ["text"],
-      additionalProperties: false,
-    });
+    expect(body.value.format).toEqual(generationResponseFormat(["电影", "电源"]));
     expect(body.value.options).toEqual(GENERATION_SAMPLING_OPTIONS);
     expect(body.value.keepAlive).toBe("60s");
   });

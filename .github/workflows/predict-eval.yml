@@ -1,0 +1,126 @@
+# 六臂生成质量 eval 的 CI 执行器（issue #34：编译/评测一律走 GitHub Actions）。
+# 每个 arm 一个并行 job（绕开单 job 6 小时上限），ollama serve 私有端口 21434，
+# 模型 digest 与冻结常量核对后才开始跑；三复跑全过门槛 eval 才算过（exit 0）。
+name: Predict Eval CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch / tag / SHA containing the eval implementation (default: current ref)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  arm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arm: qwen35-2b-hauhaucs-lean-v3
+            model: hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+            digest: cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a
+          - arm: qwen35-2b-hauhaucs-examples-v3
+            model: hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+            digest: cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a
+          - arm: qwen35-2b-hauhaucs-coverage-v3
+            model: hf.co/HauhauCS/Qwen3.5-2B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+            digest: cd456f1426678928580e118d505d2aafc5baaabbc50126312c92e8479b2c571a
+          - arm: qwen35-08b-huihui-lean-v3
+            model: hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M
+            digest: 6811ecb827b0d4c19d65e7461a292b69aa40b2333a2b46b75206bd335c9d34b1
+          - arm: qwen35-08b-huihui-examples-v3
+            model: hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M
+            digest: 6811ecb827b0d4c19d65e7461a292b69aa40b2333a2b46b75206bd335c9d34b1
+          - arm: qwen35-08b-huihui-coverage-v3
+            model: hf.co/mradermacher/Huihui-Qwen3.5-0.8B-abliterated-GGUF:Q4_K_M
+            digest: 6811ecb827b0d4c19d65e7461a292b69aa40b2333a2b46b75206bd335c9d34b1
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Restore dictionary cache
+        run: node eval/scripts/restore-dicts.mjs
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start private Ollama server (127.0.0.1:21434)
+        env:
+          OLLAMA_HOST: 127.0.0.1:21434
+        run: |
+          ollama serve > ollama.log 2>&1 &
+          for i in $(seq 1 120); do
+            curl -sf http://127.0.0.1:21434/api/tags >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:21434/api/tags
+
+      - name: Pull model and verify frozen digest
+        env:
+          OLLAMA_HOST: 127.0.0.1:21434
+        run: |
+          ollama pull "${{ matrix.model }}"
+          DIGEST=$(curl -s http://127.0.0.1:21434/api/tags | jq -r --arg m "${{ matrix.model }}" '.models[] | select(.name == $m) | .digest')
+          echo "local digest: $DIGEST"
+          if [ "$DIGEST" != "${{ matrix.digest }}" ]; then
+            echo "::error::model digest drift: local $DIGEST != frozen ${{ matrix.digest }}" >&2
+            exit 1
+          fi
+
+      - name: Eval (${{ matrix.arm }}, 3 runs)
+        run: node dist/eval/main.js run --arm eval/arms/${{ matrix.arm }}.json --runs 3
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report-${{ matrix.arm }}
+          path: eval/.cache/reports/
+          if-no-files-found: warn
+
+  gate:
+    needs: [arm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: All six arms must pass
+        env:
+          RESULTS: ${{ toJSON(needs.arm.result) }}
+        run: |
+          node -e '
+            const results = JSON.parse(process.env["RESULTS"]);
+            console.log("arm results:", JSON.stringify(results));
+            const bad = results.filter((r) => r !== "success");
+            if (bad.length > 0) {
+              console.error("non-success arm jobs: " + bad.join(","));
+              process.exit(1);
+            }
+            console.log("all six arms passed the frozen thresholds");
+          '

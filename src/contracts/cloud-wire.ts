@@ -24,10 +24,10 @@ import { err, ok, type Result } from "../domain/result.js";
 import type { DecisionInput } from "../domain/decision.js";
 import { SAMPLING_OPTIONS, SYSTEM_PROMPT, decisionQuery } from "./policy.js";
 import {
-  GENERATION_RESPONSE_FORMAT,
   GENERATION_SAMPLING_OPTIONS,
   GENERATION_SYSTEM_PROMPT,
   generationQuery,
+  generationResponseFormat,
   parseGenerationText,
 } from "./generation.js";
 
@@ -73,7 +73,7 @@ function wirePolicyFor(decision: DecisionInput): WirePolicy {
     return {
       system: GENERATION_SYSTEM_PROMPT,
       schemaName: "text",
-      schema: { ...GENERATION_RESPONSE_FORMAT } as unknown as JsonObject,
+      schema: generationResponseFormat(decision.candidates) as unknown as JsonObject,
       maxTokens: GENERATION_SAMPLING_OPTIONS.num_predict,
       userContent: defaultSeparators(generationQuery(decision)),
       parse: parseGenerationText,
