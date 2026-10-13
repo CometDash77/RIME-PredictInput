@@ -26,8 +26,15 @@ export class PredictionCache {
     this.#maxEntries = maxEntries;
   }
 
+  /**
+   * 缓存键：模式 + 状态 + 候选 + 通道身份。
+   *
+   * 模式排在最前：同一份状态在两种模式下问的是两个问题（挑第几个 / 是哪几个字），
+   * 共用键等于让选择模式的旧答案冒充生成结果（或反过来）。
+   */
   static key(decision: DecisionInput, identity: CacheIdentity): string {
     return [
+      decision.mode,
       stateDigest(decision),
       candidatesDigest(decision),
       `${identity.backend}:${identity.provider}`,

@@ -11,7 +11,8 @@ export type DecisionInputErrorCode =
   | "invalid_prediction_payload"
   | "invalid_state"
   | "invalid_candidates"
-  | "invalid_candidate_fields";
+  | "invalid_candidate_fields"
+  | "invalid_mode";
 
 export type SettingsErrorCode =
   | "settings must be a JSON object"
@@ -29,6 +30,7 @@ export type SettingsErrorCode =
   | "settings file is too large"
   | "cloud_enabled must be a boolean"
   | "update_check_enabled must be a boolean"
+  | "generation_enabled must be a boolean"
   | "local_base_url must be a valid http(s) URL"
   | "cloud must be an object with kind, model, api_key and base_url"
   | "cloud kind must be openai-responses, openai-chat, anthropic or custom"
@@ -75,6 +77,8 @@ export type LocalBackendErrorCode =
   | "model_store_unavailable"
   | "model_ownership_unavailable"
   | "invalid_model_response"
+  /** 生成模式下模型显式回了 null（「这次转换不可靠」）。 */
+  | "generation_declined"
   | "invalid_model_list"
   | "invalid_model_name"
   | "pull_in_progress"
@@ -96,6 +100,8 @@ export type DispatchErrorCode =
   | "invalid_handler_result"
   | "publish_failed"
   | "settings_changed"
+  /** 生成结果没通过词库成员/读音/音节/长度校验 → 安全留空。 */
+  | "generation_rejected"
   | "invalid_selection_event";
 
 export type ProtocolErrorCode =

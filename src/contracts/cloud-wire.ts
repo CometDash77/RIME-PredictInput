@@ -7,7 +7,8 @@
  * - 采样参数映射自冻结的 SAMPLING_OPTIONS（temperature/seed/num_predict）；
  *   num_ctx 与 think 在 OpenAI/Anthropic wire 上无等价物，映射即为策略的全集。
  * - 响应侧强制与本地完全相同的答案契约：strict JSON（拒绝重复键）、恰好一个
- *   `choice` 整数键、1..N 越界即拒。任何不合规 → invalid_model_response → 留空。
+ *   `choice` 整数键、1..N 越界即拒；生成模式换成恰好一个 `text` 键（null = 拒答）。
+ *   任何不合规 → invalid_model_response → 留空。
  *
  * 端点策略（决策 09）：openai-responses / openai-chat / anthropic 用官方缺省端点
  * （base_url 不可覆盖，凭据只发往固定源）；custom = OpenAI Chat 兼容 wire + 自由
@@ -22,6 +23,13 @@ import { parseStrictObject } from "../json/strict.js";
 import { err, ok, type Result } from "../domain/result.js";
 import type { DecisionInput } from "../domain/decision.js";
 import { SAMPLING_OPTIONS, SYSTEM_PROMPT, decisionQuery } from "./policy.js";
+import {
+  GENERATION_RESPONSE_FORMAT,
+  GENERATION_SAMPLING_OPTIONS,
+  GENERATION_SYSTEM_PROMPT,
+  generationQuery,
+  parseGenerationText,
+} from "./generation.js";
 
 export const OPENAI_CHAT_ENDPOINT = "https://api.openai.com/v1";
 export const OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1";
@@ -47,8 +55,38 @@ function choiceJsonSchema(candidateCount: number): JsonObject {
   };
 }
 
-function userContent(decision: DecisionInput): string {
-  return defaultSeparators(decisionQuery(decision));
+/**
+ * 一次调用所依据的策略。选择与生成只在这五个位置分叉，因此「同一推理端口」在云端
+ * 侧是一张表，而不是两条代码路径（决策 05 Q2A）。
+ */
+interface WirePolicy {
+  readonly system: string;
+  readonly schemaName: string;
+  readonly schema: JsonObject;
+  readonly maxTokens: number;
+  readonly userContent: string;
+  readonly parse: (text: string, candidateCount: number) => Result<string | null, ModelAnswerError>;
+}
+
+function wirePolicyFor(decision: DecisionInput): WirePolicy {
+  if (decision.mode === "generation") {
+    return {
+      system: GENERATION_SYSTEM_PROMPT,
+      schemaName: "text",
+      schema: { ...GENERATION_RESPONSE_FORMAT } as unknown as JsonObject,
+      maxTokens: GENERATION_SAMPLING_OPTIONS.num_predict,
+      userContent: defaultSeparators(generationQuery(decision)),
+      parse: parseGenerationText,
+    };
+  }
+  return {
+    system: SYSTEM_PROMPT,
+    schemaName: "choice",
+    schema: choiceJsonSchema(decision.candidates.length),
+    maxTokens: SAMPLING_OPTIONS.num_predict,
+    userContent: defaultSeparators(decisionQuery(decision)),
+    parse: (text, candidateCount) => parseChoiceAnswer(text, candidateCount),
+  };
 }
 
 export interface PreparedRequest {
@@ -66,23 +104,24 @@ export function chatCompletionsRequest(options: {
   /** 官方端点带 json_schema strict；custom 端点为兼容性省略。 */
   readonly strictFormat: boolean;
 }): PreparedRequest {
+  const policy = wirePolicyFor(options.decision);
   const body: JsonObject = {
     model: options.model,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userContent(options.decision) },
+      { role: "system", content: policy.system },
+      { role: "user", content: policy.userContent },
     ],
     temperature: SAMPLING_OPTIONS.temperature,
     seed: SAMPLING_OPTIONS.seed,
-    max_tokens: SAMPLING_OPTIONS.num_predict,
+    max_tokens: policy.maxTokens,
     ...(options.strictFormat
       ? {
           response_format: {
             type: "json_schema",
             json_schema: {
-              name: "choice",
+              name: policy.schemaName,
               strict: true,
-              schema: choiceJsonSchema(options.decision.candidates.length),
+              schema: policy.schema,
             },
           },
         }
@@ -105,18 +144,19 @@ export function responsesRequest(options: {
   readonly apiKey: string;
   readonly decision: DecisionInput;
 }): PreparedRequest {
+  const policy = wirePolicyFor(options.decision);
   const body: JsonObject = {
     model: options.model,
-    instructions: SYSTEM_PROMPT,
-    input: userContent(options.decision),
-    max_output_tokens: SAMPLING_OPTIONS.num_predict,
+    instructions: policy.system,
+    input: policy.userContent,
+    max_output_tokens: policy.maxTokens,
     temperature: SAMPLING_OPTIONS.temperature,
     text: {
       format: {
         type: "json_schema",
-        name: "choice",
+        name: policy.schemaName,
         strict: true,
-        schema: choiceJsonSchema(options.decision.candidates.length),
+        schema: policy.schema,
       },
     },
   };
@@ -136,12 +176,13 @@ export function anthropicRequest(options: {
   readonly apiKey: string;
   readonly decision: DecisionInput;
 }): PreparedRequest {
+  const policy = wirePolicyFor(options.decision);
   const body: JsonObject = {
     model: options.model,
-    max_tokens: SAMPLING_OPTIONS.num_predict,
+    max_tokens: policy.maxTokens,
     temperature: SAMPLING_OPTIONS.temperature,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userContent(options.decision) }],
+    system: policy.system,
+    messages: [{ role: "user", content: policy.userContent }],
   };
   return {
     url: ANTHROPIC_ENDPOINT + "/messages",
@@ -224,29 +265,29 @@ export function parseChoiceAnswer(text: string, candidateCount: number): Result<
   return ok(String(choice));
 }
 
-export function parseChatCompletionsAnswer(body: unknown, candidateCount: number): Result<string, ModelAnswerError> {
+export function parseChatCompletionsAnswer(body: unknown, decision: DecisionInput): Result<string | null, ModelAnswerError> {
   const parsed = ChatCompletionsResponseSchema.safeParse(body);
   if (!parsed.success) return err("invalid_model_response");
   const first = parsed.data.choices[0];
   if (first === undefined || first.finish_reason !== "stop") return err("invalid_model_response");
-  return parseChoiceAnswer(first.message.content, candidateCount);
+  return wirePolicyFor(decision).parse(first.message.content, decision.candidates.length);
 }
 
-export function parseResponsesAnswer(body: unknown, candidateCount: number): Result<string, ModelAnswerError> {
+export function parseResponsesAnswer(body: unknown, decision: DecisionInput): Result<string | null, ModelAnswerError> {
   const parsed = ResponsesResponseSchema.safeParse(body);
   if (!parsed.success) return err("invalid_model_response");
   if (parsed.data.status !== "completed") return err("invalid_model_response");
   const message = parsed.data.output.find((item) => item.type === "message");
   const text = message?.content?.find((part) => part.type === "output_text")?.text;
   if (text === undefined) return err("invalid_model_response");
-  return parseChoiceAnswer(text, candidateCount);
+  return wirePolicyFor(decision).parse(text, decision.candidates.length);
 }
 
-export function parseAnthropicAnswer(body: unknown, candidateCount: number): Result<string, ModelAnswerError> {
+export function parseAnthropicAnswer(body: unknown, decision: DecisionInput): Result<string | null, ModelAnswerError> {
   const parsed = AnthropicResponseSchema.safeParse(body);
   if (!parsed.success) return err("invalid_model_response");
   if (parsed.data.stop_reason !== "end_turn") return err("invalid_model_response");
   const text = parsed.data.content.find((part) => part.type === "text")?.text;
   if (text === undefined) return err("invalid_model_response");
-  return parseChoiceAnswer(text, candidateCount);
+  return wirePolicyFor(decision).parse(text, decision.candidates.length);
 }

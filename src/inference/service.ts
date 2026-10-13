@@ -1,6 +1,8 @@
 import { VALIDATION, cloudIdentityFor, isEligibleIdentity } from "../contracts/policy.js";
+import { generationCloudIdentityFor, generationIdentityFor, isEligibleGenerationIdentity } from "../contracts/generation.js";
+import { resolveGeneratedWord } from "../domain/generation.js";
 import type { RequestEnvelope } from "../contracts/envelope.js";
-import { decisionInputFromPayload, type DecisionInput } from "../domain/decision.js";
+import { decisionInputFromPayload, type DecisionInput, type DecisionMode } from "../domain/decision.js";
 import { ENGINE_ID_PATTERN } from "../domain/ids.js";
 import type { LocalBackendErrorCode } from "../domain/error-codes.js";
 import { DEFAULT_LOCAL_BASE_URL, type CloudChannel, type Settings } from "../domain/settings.js";
@@ -147,6 +149,12 @@ export class InferenceService {
   }
 
   async #predict(decision: DecisionInput, settings: Settings, request: RequestEnvelope): Promise<PredictionOutcome> {
+    const startedAt = this.#monotonic();
+    // 生成默认关闭（决策 05 Q6A）：开关在服务端同样权威——开关关着就留空，
+    // 不依赖 Lua 是否守规矩。
+    if (decision.mode === "generation" && !settings.generationEnabled) {
+      return this.#recordStatus({ kind: "unavailable", errorCode: "disabled" }, request, startedAt);
+    }
     const cloud = this.#activeCloud(settings);
     return cloud === null
       ? await this.#localPredict(decision, settings, request)
@@ -154,23 +162,31 @@ export class InferenceService {
   }
 
   /** 本地身份解析：Ollama 缺省端点走 digest 复核；改写的兼容端点是纯计算（无需出网）。 */
-  async #resolveLocalIdentity(settings: Settings): Promise<Result<string, LocalBackendErrorCode>> {
+  async #resolveLocalIdentity(
+    decision: DecisionInput,
+    settings: Settings,
+  ): Promise<Result<string, LocalBackendErrorCode>> {
     if (settings.localBaseUrl !== DEFAULT_LOCAL_BASE_URL) {
-      return ok(cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel));
+      return ok(
+        decision.mode === "generation"
+          ? generationCloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel)
+          : cloudIdentityFor("local-compat", settings.localBaseUrl, settings.localModel),
+      );
     }
     const resolved = await this.#local.resolveModel(settings.localModel);
     if (!resolved.ok) return err(resolved.error);
-    return ok(resolved.value.identity);
+    // 原生路径的身份由模型 digest 派生：生成策略摘要不同，同一个模型也是另一个身份。
+    return ok(decision.mode === "generation" ? generationIdentityFor(resolved.value.digest) : resolved.value.identity);
   }
 
   async #localPredict(decision: DecisionInput, settings: Settings, request: RequestEnvelope): Promise<PredictionOutcome> {
     const startedAt = this.#monotonic();
-    const identity = await this.#resolveLocalIdentity(settings);
+    const identity = await this.#resolveLocalIdentity(decision, settings);
     if (!identity.ok) {
       return this.#recordStatus(failedLocalOutcome(identity.error), request, startedAt);
     }
     const id = identity.value;
-    if (!isEligibleIdentity(id)) {
+    if (!isEligible(id, decision.mode)) {
       return this.#recordStatus(
         { kind: "unavailable", errorCode: "identity_not_validated", backend: "local", modelIdentity: id, ineligible: true },
         request,
@@ -182,7 +198,7 @@ export class InferenceService {
       ? null
       : this.#cache.get(decision, { backend: "local", provider, modelIdentity: id });
     if (cached !== null && cached.kind === "ok") {
-      const hit = applyValidation({ ...cached, cacheHit: true }, id);
+      const hit = applyValidation({ ...cached, cacheHit: true }, id, decision.mode);
       this.#recordStatus(hit, request, startedAt);
       return hit;
     }
@@ -192,9 +208,21 @@ export class InferenceService {
       this.#recordStatus(outcome, request, startedAt);
       return outcome;
     }
+    const answer = answerChoice(result, decision);
+    if (!answer.ok) {
+      const rejected: PredictionOutcome = { kind: "unavailable", errorCode: answer.error };
+      this.#recordStatus(rejected, request, startedAt);
+      return rejected;
+    }
     const actualIdentity = result.modelIdentity;
     const ok: PredictionOk = {
-      ...result,
+      kind: "ok",
+      backend: result.backend,
+      provider: result.provider,
+      model: result.model,
+      choice: answer.value,
+      requestedModel: result.requestedModel,
+      modelIdentity: actualIdentity,
       cacheHit: false,
       calibrated: false,
       validated: false,
@@ -202,7 +230,7 @@ export class InferenceService {
       humanReview: VALIDATION.human_review,
     };
     this.#cache.put(decision, { backend: "local", provider: result.provider, modelIdentity: actualIdentity }, ok);
-    const outcome = applyValidation(ok, actualIdentity);
+    const outcome = applyValidation(ok, actualIdentity, decision.mode);
     this.#recordStatus(outcome, request, startedAt);
     return outcome;
   }
@@ -215,12 +243,12 @@ export class InferenceService {
    */
   async #cloudPredict(decision: DecisionInput, cloud: CloudChannel, request: RequestEnvelope): Promise<PredictionOutcome> {
     const startedAt = this.#monotonic();
-    const identity = this.#cloud.resolveIdentity(cloud);
+    const identity = this.#cloud.resolveIdentity(cloud, decision.mode);
     if (!identity.ok) {
       return this.#recordStatus(failedCloudOutcome(identity.error), request, startedAt);
     }
     const id = identity.value;
-    if (!isEligibleIdentity(id)) {
+    if (!isEligible(id, decision.mode)) {
       return this.#recordStatus(
         { kind: "unavailable", errorCode: "identity_not_validated", backend: "cloud", modelIdentity: id, ineligible: true },
         request,
@@ -230,7 +258,7 @@ export class InferenceService {
     const cacheIdentity = { backend: "cloud", provider: cloud.kind, modelIdentity: id };
     const cached = this.#cache.get(decision, cacheIdentity);
     if (cached !== null && cached.kind === "ok") {
-      const hit = applyValidation({ ...cached, cacheHit: true }, id);
+      const hit = applyValidation({ ...cached, cacheHit: true }, id, decision.mode);
       this.#recordStatus(hit, request, startedAt);
       return hit;
     }
@@ -240,8 +268,20 @@ export class InferenceService {
       this.#recordStatus(outcome, request, startedAt);
       return outcome;
     }
+    const answer = answerChoice(result, decision);
+    if (!answer.ok) {
+      const rejected: PredictionOutcome = { kind: "unavailable", errorCode: answer.error, backend: "cloud" };
+      this.#recordStatus(rejected, request, startedAt);
+      return rejected;
+    }
     const ok: PredictionOk = {
-      ...result,
+      kind: "ok",
+      backend: result.backend,
+      provider: result.provider,
+      model: result.model,
+      choice: answer.value,
+      requestedModel: result.requestedModel,
+      modelIdentity: result.modelIdentity,
       cacheHit: false,
       calibrated: false,
       validated: false,
@@ -249,7 +289,7 @@ export class InferenceService {
       humanReview: VALIDATION.human_review,
     };
     this.#cache.put(decision, cacheIdentity, ok);
-    const outcome = applyValidation(ok, result.modelIdentity);
+    const outcome = applyValidation(ok, result.modelIdentity, decision.mode);
     this.#recordStatus(outcome, request, startedAt);
     return outcome;
   }
@@ -394,9 +434,32 @@ function assignMetadata(draft: InferenceStatusMetadataDraft, key: string, entry:
   }
 }
 
+/** 资格判定按模式选表：两条策略各自独立冻结，身份不能互相借用。 */
+function isEligible(identity: string, mode: DecisionMode): boolean {
+  return mode === "generation" ? isEligibleGenerationIdentity(identity) : isEligibleIdentity(identity);
+}
+
+/**
+ * 模型答案 → 候选显示编号：线上形状因此对 Lua 完全不变（两种模式都回 choice）。
+ *
+ * 生成模式下这一步就是「词库内校验」：词条必须命中候选集合（用户词库的投影）并通过
+ * 读音/音节/长度校验，否则 generation_rejected——不造词、不写词库、不代用户提交。
+ */
+function answerChoice(
+  answer: { readonly choice: string } | { readonly text: string },
+  decision: DecisionInput,
+): Result<string, "invalid_model_response" | "generation_rejected"> {
+  if (decision.mode === "selection") {
+    return "choice" in answer ? ok(answer.choice) : err("invalid_model_response");
+  }
+  if (!("text" in answer)) return err("invalid_model_response");
+  const resolved = resolveGeneratedWord(answer.text, decision);
+  return resolved.ok ? ok(String(resolved.value)) : err("generation_rejected");
+}
+
 /** `_apply_validation`：把「是否有资格」的判定集中在一处，成功路径都要过它。 */
-function applyValidation(outcome: PredictionOk, identity: string): PredictionOk {
-  const validated = isEligibleIdentity(identity);
+function applyValidation(outcome: PredictionOk, identity: string, mode: DecisionMode): PredictionOk {
+  const validated = isEligible(identity, mode);
   return {
     ...outcome,
     modelIdentity: identity,

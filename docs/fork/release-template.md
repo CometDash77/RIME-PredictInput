@@ -6,6 +6,9 @@
 
 ---
 
+> 本模板与 `docs/release-notes-template.md`（主仓库产物发布正文）**配套使用**：合并两份后必须覆盖
+> `src/release/release-notes.ts` 的全部判据（`pnpm release:check` 逐条核对，缺一条即挡下发布）。
+
 ## 小狼毫（Weasel）模型预测版 0.17.4-predict.{{N}}
 
 ### 下载
@@ -18,7 +21,7 @@
 - 本发布基于 fork 分支 [`predict-0.17.4`](https://github.com/CometDash77/weasel/tree/predict-0.17.4)，发布 tag：`predict-0.17.4.{{N}}`
 - 上游基底：[rime/weasel 0.17.4](https://github.com/rime/weasel/releases/tag/0.17.4)（2025-06-04），release commit `9cc96e20dc71b80876b12f689bb5863c76c2a7ed`
 - librime：随上游 0.17.4 的子模块指针 `1c23358157934bd6e6d6981f0c0164f05393b497`（即 librime 1.13.1 release），构建时使用 librime 1.13.1 官方预编译包，fork 对 librime 零改动
-- 版本追溯：上游 tag `0.17.4` → 上游 release commit `9cc96e2` → fork `predict-0.17.4` 分支 → 发布 tag `predict-0.17.4.{{N}}`；构建时 `RELEASE_BUILD=1` 注入 `PRODUCT_VERSION=0.17.4-predict.{{N}}`
+- 版本追溯：上游 tag `0.17.4`（即 `https://github.com/rime/weasel/releases/tag/0.17.4`）→ 上游 release commit `9cc96e2` → fork `predict-0.17.4` 分支 → 发布 tag `predict-0.17.4.{{N}}`；构建时 `RELEASE_BUILD=1` 注入 `PRODUCT_VERSION=0.17.4-predict.{{N}}`；派生物许可为 GPL-3.0-only
 
 ### 相对上游的四项改动
 
@@ -40,13 +43,20 @@
 - 首发：Windows 10 x64、Windows 11 x64，x64-only，全拼。
 - 不声明更老系统或非 x64 环境的支持；ARM64X 组件随上游链构建但不在首发支持声明内。
 
-### GPL-3 源码义务
+### GPL-3.0-only 源码义务
 
-- 本发布包含 GPL-3.0 授权的小狼毫（Weasel）衍生作品，依据 GPL-3 提供完整对应源码：
+- 本发布包含 GPL-3.0-only 授权的小狼毫（Weasel）衍生作品，依据 GPL-3 提供完整对应源码：
   - fork 源码 tag：`https://github.com/CometDash77/weasel/archive/refs/tags/predict-0.17.4.{{N}}.tar.gz`（zip 同路径 `.zip`）
   - librime 子模块：`https://github.com/rime/librime`（commit `1c23358157934bd6e6d6981f0c0164f05393b497`，未修改）
+  - 上游基底同许可：本派生物承自 rime/weasel 0.17.4，其许可证正文副本见主仓库 `docs/license/GPL-3.0.txt`
   - 本仓库组件（Lua 滤镜、sidecar、安装计划、协议契约）：`https://github.com/CometDash77/RIME-PredictInput` tag `{{MAIN_REPO_TAG}}`
 - 构建链与 sha256 清单：见主仓库 `docs/fork/build-and-release.md`。
+
+### 本仓库产物与发布前校验
+
+- 本发布页配套的主仓库产物（sidecar 双变体 `rime-predict-sidecar.exe` / `rime-predict-sidecar-gui.exe`、`LICENSE`、`THIRD-PARTY-NOTICES.md`）与其正文模板见 `docs/release-notes-template.md`。
+- 发布前校验：`pnpm release:check -- --tag {{MAIN_REPO_TAG}}` 必须 `PASS`（报告归档 `dist/release/release-report.json`），且 `pnpm release:notices -- --write` 已刷新声明文件；本节各源码链接需逐条点开可用。
+
 
 ### 校验
 

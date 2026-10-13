@@ -22,7 +22,7 @@ import path from "node:path";
 import { compact, type JsonValue } from "../json/canonical.js";
 import { ChatResponseSchema } from "../contracts/ollama-wire.js";
 import { SAMPLING_OPTIONS } from "../contracts/policy.js";
-import { isPlainPinyin, isSegmentable, readingMatches, segmentations } from "./syllables.js";
+import { isPlainPinyin, isSegmentable, readingMatches, segmentations } from "../domain/syllables.js";
 import { buildLexicon, type Lexicon } from "./dicts.js";
 import { checkFrozen } from "./build-holdout.js";
 

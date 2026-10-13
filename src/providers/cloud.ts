@@ -12,10 +12,11 @@
 
 import type { CloudChannel, CloudKind } from "../domain/settings.js";
 import type { TransportFailureCode, HttpFailureCode } from "../domain/error-codes.js";
-import type { DecisionInput } from "../domain/decision.js";
+import { DEFAULT_DECISION_MODE, type DecisionInput, type DecisionMode } from "../domain/decision.js";
 import { compact } from "../json/canonical.js";
 import { err, ok, type Result } from "../domain/result.js";
 import { cloudIdentityFor } from "../contracts/policy.js";
+import { generationCloudIdentityFor } from "../contracts/generation.js";
 import { FetchTransport, decodeJsonBody, safeHttpError, type HttpTransportLike } from "./http.js";
 import type { ConnectionStatus } from "./ollama.js";
 import {
@@ -36,22 +37,26 @@ export type CloudBackendErrorCode =
   | TransportFailureCode
   | HttpFailureCode
   | "invalid_model_response"
+  /** 生成模式下模型显式回了 null。 */
+  | "generation_declined"
   | "invalid_request";
 
+export type CloudInferenceOk = {
+  readonly kind: "ok";
+  readonly backend: "cloud";
+  readonly provider: CloudKind;
+  readonly model: string;
+  readonly requestedModel: string;
+  readonly modelIdentity: string;
+} & ({ readonly choice: string } | { readonly text: string });
+
 export type CloudInferenceOutcome =
-  | {
-      readonly kind: "ok";
-      readonly backend: "cloud";
-      readonly provider: CloudKind;
-      readonly model: string;
-      readonly choice: string;
-      readonly requestedModel: string;
-      readonly modelIdentity: string;
-    }
+  | CloudInferenceOk
   | { readonly kind: "unavailable"; readonly errorCode: CloudBackendErrorCode };
 
 export interface CloudChannelPort {
-  resolveIdentity(cloud: CloudChannel): Result<string, CloudBackendErrorCode>;
+  /** 身份按模式派生：生成策略摘要不同，同一个通道也是另一个身份。 */
+  resolveIdentity(cloud: CloudChannel, mode?: DecisionMode): Result<string, CloudBackendErrorCode>;
   infer(decision: DecisionInput, cloud: CloudChannel): Promise<CloudInferenceOutcome>;
   testConnection(cloud: CloudChannel): Promise<ConnectionStatus>;
   close(): Promise<void>;
@@ -64,7 +69,8 @@ export interface CloudBackendOptions {
 }
 
 interface PreparedCall extends PreparedRequest {
-  parse(body: unknown, candidateCount: number): Result<string, "invalid_model_response">;
+  /** 答案契约由模式决定（choice 整数 / text 词条，后者 null = 拒答）。 */
+  parse(body: unknown, decision: DecisionInput): Result<string | null, "invalid_model_response">;
 }
 
 function channelEndpoint(cloud: CloudChannel): string | null {
@@ -92,10 +98,17 @@ export class CloudBackend implements CloudChannelPort {
   }
 
   /** 纯计算：通道 + 端点 + 模型 + 冻结策略的联合摘要。凭据不参与。 */
-  resolveIdentity(cloud: CloudChannel): Result<string, CloudBackendErrorCode> {
+  resolveIdentity(
+    cloud: CloudChannel,
+    mode: DecisionMode = DEFAULT_DECISION_MODE,
+  ): Result<string, CloudBackendErrorCode> {
     const endpoint = channelEndpoint(cloud);
     if (endpoint === null) return err("invalid_request");
-    return ok(cloudIdentityFor(cloud.kind, endpoint, cloud.model));
+    return ok(
+      mode === "generation"
+        ? generationCloudIdentityFor(cloud.kind, endpoint, cloud.model)
+        : cloudIdentityFor(cloud.kind, endpoint, cloud.model),
+    );
   }
 
   #prepare(cloud: CloudChannel, decision: DecisionInput): Result<PreparedCall, CloudBackendErrorCode> {
@@ -138,7 +151,7 @@ export class CloudBackend implements CloudChannelPort {
   }
 
   async infer(decision: DecisionInput, cloud: CloudChannel): Promise<CloudInferenceOutcome> {
-    const identity = this.resolveIdentity(cloud);
+    const identity = this.resolveIdentity(cloud, decision.mode);
     if (!identity.ok) return { kind: "unavailable", errorCode: identity.error };
     const prepared = this.#prepare(cloud, decision);
     if (!prepared.ok) return { kind: "unavailable", errorCode: prepared.error };
@@ -154,17 +167,24 @@ export class CloudBackend implements CloudChannelPort {
       }
       const decoded = decodeJsonBody(response.value.body);
       if (!decoded.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
-      const answer = prepared.value.parse(decoded.value, decision.candidates.length);
+      const answer = prepared.value.parse(decoded.value, decision);
       if (!answer.ok) return { kind: "unavailable", errorCode: "invalid_model_response" };
-      return {
-        kind: "ok",
-        backend: "cloud",
+      const value = answer.value;
+      if (value === null) {
+        return {
+          kind: "unavailable",
+          errorCode: decision.mode === "generation" ? "generation_declined" : "invalid_model_response",
+        };
+      }
+      const base = {
+        kind: "ok" as const,
+        backend: "cloud" as const,
         provider: cloud.kind,
         model: cloud.model,
-        choice: answer.value,
         requestedModel: cloud.model,
         modelIdentity: identity.value,
       };
+      return decision.mode === "generation" ? { ...base, text: value } : { ...base, choice: value };
     } catch {
       return { kind: "unavailable", errorCode: "invalid_model_response" };
     }
