@@ -238,3 +238,30 @@ describe("settingsEqual 覆盖通道字段", () => {
     expect(settingsEqual(cloudA, cloudA)).toBe(true);
   });
 });
+
+describe("生成模式开关（决策 05 Q6A：默认关，omit-if-default）", () => {
+  it("缺字段 = 默认关，线格式不写出该键", () => {
+    const settings = load(settingsFromMapping({}));
+    expect(settings.generationEnabled).toBe(false);
+    expect("generation_enabled" in toWire(settings)).toBe(false);
+  });
+
+  it("打开后写出到线格式末位", () => {
+    const settings = load(settingsFromMapping({ generation_enabled: true }));
+    expect(settings.generationEnabled).toBe(true);
+    const wire = toWire(settings);
+    expect(wire.generation_enabled).toBe(true);
+    expect(Object.keys(wire).at(-1)).toBe("generation_enabled");
+  });
+
+  it("开关变化被视为设置变更", () => {
+    const base = load(settingsFromMapping({}));
+    const on = load(settingsFromMapping({ generation_enabled: true }));
+    expect(settingsEqual(base, on)).toBe(false);
+    expect(settingsEqual(on, on)).toBe(true);
+  });
+
+  it("非布尔拒绝", () => {
+    expect(codeOf(settingsFromMapping({ generation_enabled: "yes" }))).toBe("generation_enabled must be a boolean");
+  });
+});

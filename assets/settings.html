@@ -59,6 +59,7 @@
 
   <section class="card">
     <h2>行为与隐私</h2>
+    <div class="row"><label for="generationEnabled">生成模式（跨页候选选词）</label><input id="generationEnabled" type="checkbox"><span class="note">开启后预测从全部候选（最多 255）里挑词并参考上文。</span></div>
     <div class="row"><label for="slot">插入位置（全候选流）</label><input id="slot" type="number" min="1" step="1"><span class="note">默认 5；可位于后续页。</span></div>
     <div class="row"><label for="updateCheck">自动检查更新</label><input id="updateCheck" type="checkbox" checked><span class="note">匿名查询 GitHub 是否有新版本，不含任何输入内容；发现新版本时在总览处给出发布页链接，下载安装永远由你手动完成。</span></div>
     <div class="row"><label for="wait">停输入触发延迟</label><input id="wait" type="number" min="1" max="200" step="1"><span>毫秒（最多 200）</span></div>
@@ -90,7 +91,7 @@
       return payload;
     };
     const statusLabel = value => ({ready:"运行中",busy:"处理中",starting:"启动中",stopped:"已停止",connected:"已连接",available:"可用",unavailable:"不可用",ok:"成功",pending:"处理中",pulling:"正在安装",installed:"已安装",cancelled:"已取消",not_installed:"未安装",unverified:"未验证",failed:"未通过（历史筛选）",accepted:"已验收（独立筛选）",selected:"已提交选择",timeout:"超时",idle:"暂无请求",unknown:"未知"}[value]||"未知");
-    const validationErrors = {"slot must be a positive integer":"插入位置必须是正整数。", "local_wait_ms must be between 1 and 200":"停输入触发延迟必须是 1 到 200 毫秒的整数。", "local_model is invalid":"模型名称格式无效。", "cloud kind must be openai-responses, openai-chat, anthropic or custom":"云端服务商接口无效。", "cloud model is invalid":"云端模型名称格式无效。", "cloud api_key must be a short string":"API 密钥格式无效。", "cloud base_url must be a valid http(s) URL":"接口地址必须是有效的 http(s) 地址。", "custom channel requires base_url":"自定义通道需要填写接口地址。", "base_url is only supported by the custom channel":"只有自定义通道可以修改接口地址。", "cloud must be an object with kind, model, api_key and base_url":"云端通道配置不完整。", "cloud_enabled must be a boolean":"云端开关无效。"};
+    const validationErrors = {"slot must be a positive integer":"插入位置必须是正整数。", "local_wait_ms must be between 1 and 200":"停输入触发延迟必须是 1 到 200 毫秒的整数。", "local_model is invalid":"模型名称格式无效。", "cloud kind must be openai-responses, openai-chat, anthropic or custom":"云端服务商接口无效。", "cloud model is invalid":"云端模型名称格式无效。", "cloud api_key must be a short string":"API 密钥格式无效。", "cloud base_url must be a valid http(s) URL":"接口地址必须是有效的 http(s) 地址。", "custom channel requires base_url":"自定义通道需要填写接口地址。", "base_url is only supported by the custom channel":"只有自定义通道可以修改接口地址。", "cloud must be an object with kind, model, api_key and base_url":"云端通道配置不完整。", "cloud_enabled must be a boolean":"云端开关无效。", "generation_enabled must be a boolean":"生成模式开关无效。"};
     const errorLabel = value => ({ollama_missing:"未找到 Ollama，请先安装 Ollama。",ollama_start_failed:"Ollama 启动失败。",local_unavailable:"本地服务不可用。",local_auth_required:"本地 Ollama 要求认证，暂无法使用。",model_missing:"模型尚未安装。",model_store_unavailable:"无法读取模型库存。",model_version_unavailable:"无法核对模型完整版本。",identity_not_validated:"此模型与当前策略尚未验收，继续使用普通候选。",model_ownership_unavailable:"无法核对模型占用状态。",invalid_model_response:"模型响应无效，继续使用普通候选。",invalid_model_list:"模型列表格式无效。",network_unavailable:"无法连接本地服务。",timeout:"连接超时。",pull_in_progress:"已有安装任务正在运行。",pull_start_failed:"无法启动模型安装。",pull_failed:"模型安装失败，请检查模型名称和网络。",pull_cancel_failed:"取消安装失败，请重试。",invalid_model_name:"模型名称格式无效。",settings_save_failed:"设置保存失败。",session_expired:"设置会话已过期。",operation_unavailable:"操作暂时不可用。",status_unavailable:"无法读取服务状态。",disabled:"模型预测已关闭。",sidecar_stopping:"伴随进程正在退出。",local_only:"首版仅支持本地 Ollama。",invalid_request:"请求无效。",request_failed:"请求失败。",invalid_json:"请求格式无效。",provider_unavailable:"Ollama 服务暂时不可用。",provider_rejected:"Ollama 拒绝此请求。",provider_error:"Ollama 返回错误。",provider_overloaded:"Ollama 服务繁忙。",model_unavailable:"Ollama 未找到此模型。",unauthorized:"Ollama 认证失败。",forbidden:"Ollama 拒绝访问。",rate_limited:"请求过于频繁。",redirect_refused:"本地服务返回了不允许的跳转。",response_too_large:"服务响应过大。"}[value]||validationErrors[value]||"操作失败，请检查本地服务或重新打开设置页。");
     const metrics = (id, items) => { $(id).replaceChildren(); items.forEach(([title,value])=>{const d=document.createElement("div");d.className="metric";const b=document.createElement("strong");b.textContent=title;const s=document.createElement("span");s.textContent=value;d.append(b,s);$(id).append(d);}); };
     const syncCloudRows = () => { const on=$("cloudEnabled").checked; document.querySelectorAll("[data-cloud-field]").forEach(el=>el.classList.toggle("hidden",!on)); $("cloudBaseUrlRow").classList.toggle("hidden",!on||$("cloudKind").value!=="custom"); };
@@ -126,7 +127,7 @@
       const cloud=settings.cloud||null;
       $("cloudEnabled").checked=settings.cloud_enabled===true;
       $("cloudKind").value=cloud?cloud.kind:""; $("cloudModel").value=cloud?cloud.model:""; $("cloudApiKey").value=cloud?cloud.api_key:""; $("cloudBaseUrl").value=cloud&&cloud.base_url?cloud.base_url:"";
-      $("updateCheck").checked=settings.update_check_enabled!==false;
+      $("updateCheck").checked=settings.update_check_enabled!==false; $("generationEnabled").checked=settings.generation_enabled===true;
       syncCloudRows();
       renderStatus(data);
       notice("设置已读取。",true);
@@ -148,7 +149,7 @@
         if(kind==="custom"&&!base)return notice("自定义通道需要填写接口地址。",false);
         cloud={kind,model,api_key:key,base_url:kind==="custom"?base:null};
       } else { cloud=settings&&settings.cloud?settings.cloud:null; }
-      const body={...settings,enabled:$("enabled").checked,backend:"local",local_model:$("model").value.trim(),provider:null,slot:Number($("slot").value),local_wait_ms:Number($("wait").value),log_mode:$("logMode").value,cloud_enabled:cloudOn,cloud};
+      const body={...settings,enabled:$("enabled").checked,generation_enabled:$("generationEnabled").checked,backend:"local",local_model:$("model").value.trim(),provider:null,slot:Number($("slot").value),local_wait_ms:Number($("wait").value),log_mode:$("logMode").value,cloud_enabled:cloudOn,cloud};
       if($("updateCheck").checked) delete body.update_check_enabled; else body.update_check_enabled=false;
       const r=await request("/api/settings","POST",body);
       if(r.status==="ok"){settings=body;notice("已保存；后续输入立即采用新设置。",true);}

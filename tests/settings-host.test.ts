@@ -286,6 +286,18 @@ describe("settings view", () => {
     expect(runtime.store.saved?.slot).toBe(5);
   });
 
+  it("saves the generation switch as a true/false round trip", async () => {
+    const base = { enabled: true, backend: "local", provider: null, local_model: DEFAULT_MODEL, slot: 5, local_wait_ms: 150, thresholds: {}, log_mode: "metadata" };
+    const on = await call("/api/settings", { method: "POST", token: TOKEN, body: { ...base, generation_enabled: true } });
+    expect({ status: on.status, body: on.body }).toEqual({ status: 200, body: { status: "ok" } });
+    expect(runtime.store.saved?.generationEnabled).toBe(true);
+    const off = await call("/api/settings", { method: "POST", token: TOKEN, body: base });
+    expect({ status: off.status, body: off.body }).toEqual({ status: 200, body: { status: "ok" } });
+    expect(runtime.store.saved?.generationEnabled).toBe(false);
+    const bad = await call("/api/settings", { method: "POST", token: TOKEN, body: { ...base, generation_enabled: "yes" } });
+    expect(bad.status).toBe(400);
+  });
+
   it("routes actions and reports an unknown action as invalid_request", async () => {
     const cleared = await call("/api/action", { method: "POST", token: TOKEN, body: { action: "clear_cache" } });
     expect({ status: cleared.status, body: cleared.body }).toEqual({
